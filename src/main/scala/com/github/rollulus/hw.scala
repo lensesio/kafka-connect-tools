@@ -18,9 +18,11 @@ object Go {
   def apply(cfg: Config) = {
     val api = new KafkaConnectApi(cfg.url)
     val fmt = new HumanFormatter()
-    println(fmt.connectorInfo(api.connectorInfo("twitter-source")))
+    api.delete("twitter-source")
+   // println(fmt.connectorInfo(api.connectorInfo("twitter-source")))
 //    val ns = api.activeConnectorNames()
 //    println(ns.mkString("\n"))
+
   }
 }
 
@@ -31,7 +33,7 @@ object HelloWorld {
       head("kafconcli", "1.0")
       cmd("ls") action { (_, c) => c.copy(cmd = LIST) } text "list active connectors names" children()
       cmd("info") action { (_, c) => c.copy(cmd = INFO) } text "show information for the specified connector(s)" children()
-      cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "removes specified connector(s)" children()
+      cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "removes the specified connector(s)" children()
     }
 
     parser.parse(args, Config()) match {

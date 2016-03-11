@@ -28,9 +28,17 @@ class KafkaConnectApi(url: String) {
     }
   }
 
-  private def req[T : JsonReader](endpoint: String): T = {
-    Http(url + endpoint).headers(defaultHeaders).asString match {
+  //TODO: I want to curry this one?
+  private def req[T: JsonReader](endpoint: String, method: String = "GET"): T = {
+    Http(url + endpoint).method(method).headers(defaultHeaders).asString match {
       case resp if resp.is2xx => resp.body.parseJson.convertTo[T]
+      case resp => throw non2xxException(resp)
+    }
+  }
+
+  private def voidReq(endpoint: String, method: String = "GET"): Unit = {
+    Http(url + endpoint).method(method).headers(defaultHeaders).asString match {
+      case resp if resp.is2xx =>
       case resp => throw non2xxException(resp)
     }
   }
@@ -39,8 +47,13 @@ class KafkaConnectApi(url: String) {
     req[List[String]]("connectors")
   }
 
-  def connectorInfo(name: String) : ConnectorInfo = {
+  def connectorInfo(name: String): ConnectorInfo = {
     import MyJsonProtocol.connectorinfo
     req[ConnectorInfo](s"connectors/${name}")
+  }
+
+
+  def delete(name: String) = {
+    voidReq(s"connectors/${name}","DELETE")
   }
 }
