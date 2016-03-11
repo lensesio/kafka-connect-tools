@@ -4,19 +4,21 @@ import scopt._
 
 object AppCommand extends Enumeration {
   type AppCommand = Value
-  val NONE, LIST, INFO = Value
+  val NONE, LIST, INFO, DELETE = Value
 }
-
 import AppCommand._
 
-case class Config(cmd: AppCommand= NONE)
+object Defaults {
+  val BaseUrl = "http://localhost:8083/"
+}
 
+case class Config(cmd: AppCommand= NONE, url: String = Defaults.BaseUrl)
 
 object Go {
   def apply(cfg: Config) = {
-    val url = "http://localhost:8083/"
-    val api = new KafkaConnectApi(url)
-    println(api.connectorInfo("twitter-source"))
+    val api = new KafkaConnectApi(cfg.url)
+    val fmt = new HumanFormatter()
+    println(fmt.connectorInfo(api.connectorInfo("twitter-source")))
 //    val ns = api.activeConnectorNames()
 //    println(ns.mkString("\n"))
   }
@@ -27,17 +29,18 @@ object HelloWorld {
 
     val parser = new OptionParser[Config]("kafconcli") {
       head("kafconcli", "1.0")
-      cmd("ls") action { (_, c) => c.copy(cmd =LIST) } text ("list active connectors names") children()
-      cmd("info") action { (_, c) => c.copy(cmd = INFO) } text ("show information for the specified connector(s)") children()
+      cmd("ls") action { (_, c) => c.copy(cmd = LIST) } text "list active connectors names" children()
+      cmd("info") action { (_, c) => c.copy(cmd = INFO) } text "show information for the specified connector(s)" children()
+      cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "removes specified connector(s)" children()
     }
 
     parser.parse(args, Config()) match {
       case Some(config) =>
-      // do stuff
+        // do stuff
         Go(config)
 
       case None =>
-      // arguments are bad, error message will have been displayed
+        // arguments are bad, error message will have been displayed
         println("fail")
     }
   }
