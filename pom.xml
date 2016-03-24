@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.rollulus</groupId>
-    <artifactId>kafconcli</artifactId>
+    <artifactId>kafka-connect-cli</artifactId>
     <packaging>jar</packaging>
     <version>0.1</version>
-    <name>kafconcli</name>
+    <name>kafka-connect-cli</name>
 
     <properties>
         <java.version>1.8</java.version>
