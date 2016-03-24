@@ -14,3 +14,12 @@ class HumanFormatter extends Formatter {
        |${i.config.toList.map{kv => s"    ${kv._1}: ${kv._2}"}.mkString("\n")}
        |  task ids: ${i.tasks.map{t=>t.task.toString}.mkString(sep = "; ")}""".stripMargin
 }
+
+//TODO: can be more elegant
+class PropertiesFormatter extends Formatter {
+  override def connectorNames(ns: Seq[String]): String = ns.mkString("\n")
+  override def connectorInfo(i: ConnectorInfo): String =
+    s"""#Connector `${i.name}`:
+       |${i.config.toList.map{kv => s"${kv._1}=${kv._2}"}.mkString("\n")}
+       |#task ids: ${i.tasks.map{t=>t.task.toString}.mkString(sep = "; ")}""".stripMargin
+}
