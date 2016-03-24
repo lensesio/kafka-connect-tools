@@ -27,7 +27,7 @@ object Go {
   }).filterNot(_.isEmpty).mkString(", ") + "}"
 
   def apply(cfg: Config) = {
-    val api = new KafkaConnectApi(cfg.url)
+    val api = new KafkaConnectApi(new java.net.URI(cfg.url))
     val fmt = new PropertiesFormatter()
 
     lazy val configuration = propsToJson(allStdIn.toSeq)
@@ -39,7 +39,6 @@ object Go {
       case RUN => cfg.connectorNames.foreach(api.updateConnector(_, configuration))
       case INFO => println(cfg.connectorNames.map(api.connectorInfo).map(fmt.connectorInfo).mkString("\n"))
     }
-
   }
 }
 
@@ -49,14 +48,20 @@ object HelloWorld {
     val parser = new OptionParser[Config]("kafconcli") {
       head("kafconcli", "1.0")
       help("help") text ("prints this usage text")
+
+      opt[String]('e', "endpoint") action { (x, c) =>
+        c.copy(url = x) } text(s"Kafka REST URL, default is ${Defaults.BaseUrl}")
+
       cmd("ls") action { (_, c) => c.copy(cmd = LIST) } text "list active connectors names." children()
       cmd("info") action { (_, c) => c.copy(cmd = INFO) } text "retrieve information for the specified connector(s)." children()
       cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "remove the specified connector(s)." children()
       cmd("create") action { (_, c) => c.copy(cmd = CREATE) } text "create the specified connector with the .properties from stdin; the connector cannot already exist." children()
       cmd("run") action { (_, c) => c.copy(cmd = RUN) } text "create or update the specified connector with the .properties from stdin." children()
+
       arg[String]("<connector-name>...") unbounded() optional() action { (x, c) =>
         c.copy(connectorNames = c.connectorNames :+ x)
       } text ("connector name(s)")
+
       checkConfig { c =>
         if (c.cmd == NONE) failure("Command expected.")
         else if (c.cmd != LIST && c.connectorNames.length==0) failure("Please specify the connector-name(s)")
