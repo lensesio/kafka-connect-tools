@@ -14,6 +14,7 @@ object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val errormsg = jsonFormat2(ErrorMessage)
 }
 
+// http://docs.confluent.io/2.1.0-alpha1/connect/userguide.html#rest-interface
 class KafkaConnectApi(url: String) {
   val defaultHeaders = Seq("Accept" -> "application/json", "Content-Type" -> "application/json")
 
@@ -28,9 +29,13 @@ class KafkaConnectApi(url: String) {
     }
   }
 
-  //TODO: I want to curry this one?
-  private def req[T: JsonReader](endpoint: String, method: String = "GET"): T = {
-    Http(url + endpoint).method(method).headers(defaultHeaders).asString match {
+  //TODO: some day I know how to improve this
+  private def req[T: JsonReader](endpoint: String, method: String = "GET", data: String = null): T = {
+    val r = Http(url + endpoint).headers(defaultHeaders)
+    (r match {
+      case _ if data != null => r.postData(data)
+      case _ => r
+    }).method(method).asString match {
       case resp if resp.is2xx => resp.body.parseJson.convertTo[T]
       case resp => throw non2xxException(resp)
     }
