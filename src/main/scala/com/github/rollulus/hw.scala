@@ -48,23 +48,26 @@ object HelloWorld {
 
     val parser = new OptionParser[Config]("kafconcli") {
       head("kafconcli", "1.0")
-      cmd("ls") action { (_, c) => c.copy(cmd = LIST) } text "list active connectors names" children()
-      cmd("info") action { (_, c) => c.copy(cmd = INFO) } text "retrieves information for the specified connector(s)" children()
-      cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "removes the specified connector(s)" children()
-      cmd("create") action { (_, c) => c.copy(cmd = CREATE) } text "creates the specified connector with the .properties from stdin" children()
-      cmd("run") action { (_, c) => c.copy(cmd = RUN) } text "creates or updates the specified connector with the .properties from stdin" children()
+      help("help") text ("prints this usage text")
+      cmd("ls") action { (_, c) => c.copy(cmd = LIST) } text "list active connectors names." children()
+      cmd("info") action { (_, c) => c.copy(cmd = INFO) } text "retrieve information for the specified connector(s)." children()
+      cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "remove the specified connector(s)." children()
+      cmd("create") action { (_, c) => c.copy(cmd = CREATE) } text "create the specified connector with the .properties from stdin; the connector cannot already exist." children()
+      cmd("run") action { (_, c) => c.copy(cmd = RUN) } text "create or update the specified connector with the .properties from stdin." children()
       arg[String]("<connector-name>...") unbounded() optional() action { (x, c) =>
-        c.copy(connectorNames = c.connectorNames :+ x) } text("connector name(s)")
+        c.copy(connectorNames = c.connectorNames :+ x)
+      } text ("connector name(s)")
+      checkConfig { c =>
+        if (c.cmd == NONE) failure("Command expected.")
+        else if (c.cmd != LIST && c.connectorNames.length==0) failure("Please specify the connector-name(s)")
+        else success
+      }
     }
 
     parser.parse(args, Config()) match {
       case Some(config) =>
-        // do stuff
         Go(config)
-
       case None =>
-        // arguments are bad, error message will have been displayed
-        println("fail")
     }
   }
 }
