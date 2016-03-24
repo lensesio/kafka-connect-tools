@@ -57,6 +57,19 @@ class KafkaConnectApi(url: String) {
     req[ConnectorInfo](s"connectors/${name}")
   }
 
+  def addConnector(name: String, config: String) : ConnectorInfo = {
+    import MyJsonProtocol.connectorinfo
+    req[ConnectorInfo](s"connectors","POST",
+      s"""{
+         |  "name": "${name}",
+         |  "config": ${config}
+         |}""".stripMargin)
+  }
+
+  def updateConnector(name: String, config: String) : ConnectorInfo = {
+    import MyJsonProtocol.connectorinfo
+    req[ConnectorInfo](s"connectors/${name}/config","PUT", config)
+  }
 
   def delete(name: String) = {
     voidReq(s"connectors/${name}","DELETE")
