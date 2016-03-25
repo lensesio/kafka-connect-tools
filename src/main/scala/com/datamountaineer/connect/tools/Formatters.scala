@@ -1,4 +1,4 @@
-package com.github.rollulus
+package com.datamountaineer.connect.tools
 
 trait Formatter {
   def connectorNames(ns : Seq[String]): String

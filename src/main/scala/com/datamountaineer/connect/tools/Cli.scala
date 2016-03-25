@@ -1,4 +1,4 @@
-package com.github.rollulus
+package com.datamountaineer.connect.tools
 
 import scopt._
 
