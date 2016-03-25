@@ -12,21 +12,11 @@ object Defaults {
   val BaseUrl = "http://localhost:8083/"
 }
 
-case class Config(cmd: AppCommand= NONE, url: String = Defaults.BaseUrl, connectorNames: Seq[String] = Seq())
+case class Arguments(cmd: AppCommand= NONE, url: String = Defaults.BaseUrl, connectorNames: Seq[String] = Seq())
 
-
-object Go {
-  def allStdIn = Iterator.
-    continually(io.StdIn.readLine).
-    takeWhile(x => {x != null})
-
-  lazy val R = "([^#].*)=(.*)".r
-  def propsToJson(s:Seq[String]) = "{" + s.map(_ match {
-    case R(k,v) => s""""${k.trim}":"${v.trim}""""
-    case _ => ""
-  }).filterNot(_.isEmpty).mkString(", ") + "}"
-
-  def apply(cfg: Config) = {
+// Handles the AppCommand Arguments
+object ExecuteCommand {
+  def apply(cfg: Arguments) = {
     val api = new KafkaConnectApi(new java.net.URI(cfg.url))
     val fmt = new PropertiesFormatter()
 
@@ -40,12 +30,25 @@ object Go {
       case GET => println(cfg.connectorNames.map(api.connectorInfo).map(fmt.connectorInfo).mkString("\n"))
     }
   }
+
+  // Returns an iterator that reads stdin until EOF.
+  def allStdIn = Iterator.
+    continually(io.StdIn.readLine).
+    takeWhile(x => {x != null})
+
+  // Translates a .properties key values into a json map. What can possibly go wrong?
+  lazy val R = "([^#].*)=(.*)".r
+  def propsToJson(s:Seq[String]) = "{" + s.map(_ match {
+    case R(k,v) => s""""${k.trim}":"${v.trim}""""
+    case _ => ""
+  }).filterNot(_.isEmpty).mkString(", ") + "}"
 }
 
-object HelloWorld {
+// Entry point, translates arguments into a Config
+object Cli {
   def main(args: Array[String]): Unit = {
 
-    val parser = new OptionParser[Config]("kafconcli") {
+    val parser = new OptionParser[Arguments]("kafconcli") {
       head("kafconcli", "1.0")
       help("help") text ("prints this usage text")
 
@@ -69,9 +72,9 @@ object HelloWorld {
       }
     }
 
-    parser.parse(args, Config()) match {
-      case Some(config) =>
-        Go(config)
+    parser.parse(args, Arguments()) match {
+      case Some(as) =>
+        ExecuteCommand(as)
       case None =>
     }
   }
