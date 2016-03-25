@@ -4,7 +4,7 @@ import scopt._
 
 object AppCommand extends Enumeration {
   type AppCommand = Value
-  val NONE, LIST, INFO, DELETE, CREATE, RUN  = Value
+  val NONE, LIST, GET, DELETE, CREATE, RUN  = Value
 }
 import AppCommand._
 
@@ -35,9 +35,9 @@ object Go {
     cfg.cmd match {
       case LIST => println(fmt.connectorNames(api.activeConnectorNames))
       case DELETE => cfg.connectorNames.foreach(api.delete)
-      case CREATE => cfg.connectorNames.foreach(api.addConnector(_, configuration))
-      case RUN => cfg.connectorNames.foreach(api.updateConnector(_, configuration))
-      case INFO => println(cfg.connectorNames.map(api.connectorInfo).map(fmt.connectorInfo).mkString("\n"))
+      case CREATE => println(cfg.connectorNames.map(api.addConnector(_, configuration)).map(fmt.connectorInfo).mkString("\n"))
+      case RUN => println(cfg.connectorNames.map(api.updateConnector(_, configuration)).map(fmt.connectorInfo).mkString("\n"))
+      case GET => println(cfg.connectorNames.map(api.connectorInfo).map(fmt.connectorInfo).mkString("\n"))
     }
   }
 }
@@ -53,7 +53,7 @@ object HelloWorld {
         c.copy(url = x) } text(s"Kafka REST URL, default is ${Defaults.BaseUrl}")
 
       cmd("ls") action { (_, c) => c.copy(cmd = LIST) } text "list active connectors names." children()
-      cmd("info") action { (_, c) => c.copy(cmd = INFO) } text "retrieve information for the specified connector(s)." children()
+      cmd("get") action { (_, c) => c.copy(cmd = GET) } text "get information about the specified connector(s)." children()
       cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "remove the specified connector(s)." children()
       cmd("create") action { (_, c) => c.copy(cmd = CREATE) } text "create the specified connector with the .properties from stdin; the connector cannot already exist." children()
       cmd("run") action { (_, c) => c.copy(cmd = RUN) } text "create or update the specified connector with the .properties from stdin." children()
