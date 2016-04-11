@@ -4,7 +4,7 @@
     <groupId>com.datamountaineer</groupId>
     <artifactId>kafka-connect-cli</artifactId>
     <packaging>jar</packaging>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.1</version>
     <name>kafka-connect-cli</name>
     <description>Lightweight CLI for Kafka Connect admin</description>
 
@@ -19,8 +19,8 @@
         <connection>scm:git:git@github.com:datamountaineer/kafka-connect-tools.git</connection>
         <url>https://github.com/datamountaineer/kafka-connect-tools</url>
         <developerConnection>scm:git:git@github.com:datamountaineer/kafka-connect-tools.git</developerConnection>
-        <tag>release-0.1</tag>
-    </scm>
+      <tag>release-0.1</tag>
+  </scm>
 
     <developers>
         <developer>
@@ -103,12 +103,15 @@
                 <version>3.2.0</version>
                 <configuration>
                     <recompileMode>incremental</recompileMode>
+
                 </configuration>
+
                 <executions>
                     <execution>
                         <id>scala-compile</id>
                         <phase>process-resources</phase>
                         <goals>
+                            <goal>add-source</goal>
                             <goal>compile</goal>
                         </goals>
                     </execution>
@@ -140,19 +143,19 @@
                 </executions>
             </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.2.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-source-plugin</artifactId>-->
+                <!--<version>2.2.1</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<id>attach-sources</id>-->
+                        <!--<goals>-->
+                            <!--<goal>jar-no-fork</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
             <!--<plugin>-->
             <!--<groupId>org.apache.maven.plugins</groupId>-->
             <!--<artifactId>maven-javadoc-plugin</artifactId>-->
