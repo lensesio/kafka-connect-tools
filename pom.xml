@@ -4,14 +4,14 @@
     <groupId>com.datamountaineer</groupId>
     <artifactId>kafka-connect-cli</artifactId>
     <packaging>jar</packaging>
-    <version>0.1</version>
+    <version>0.2-SNAPSHOT</version>
     <name>kafka-connect-cli</name>
 
     <scm>
         <connection>scm:git:git@github.com:datamountaineer/kafka-connect-tools.git</connection>
         <url>https://github.com/datamountaineer/kafka-connect-tools</url>
         <developerConnection>scm:git:git@github.com:datamountaineer/kafka-connect-tools.git</developerConnection>
-      <tag>release-0.1</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <properties>
