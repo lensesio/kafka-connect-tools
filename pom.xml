@@ -19,7 +19,7 @@
         <connection>scm:git:git@github.com:datamountaineer/kafka-connect-tools.git</connection>
         <url>https://github.com/datamountaineer/kafka-connect-tools</url>
         <developerConnection>scm:git:git@github.com:datamountaineer/kafka-connect-tools.git</developerConnection>
-      <tag>release-0.1</tag>
+    <tag>release-0.1</tag>
   </scm>
 
     <developers>
