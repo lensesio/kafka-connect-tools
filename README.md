@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/datamountaineer/kafka-connect-tools.svg?branch=master)](https://travis-ci.org/datamountaineer/kafka-connect-tools)
+
 Kafka Connect CLI
 =================
 
