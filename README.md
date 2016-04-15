@@ -3,19 +3,19 @@
 Kafka Connect CLI
 =================
 
-This is a tiny command line interface (CLI) around the [Kafka Connect REST Interface](http://docs.confluent.io/2.0.1/connect/userguide.html#rest-interface) to manage connectors. It is used in a git like fashion where the first program argument indicates the command: it can be one of `[ls|get|rm|create|run]`.
+This is a tiny command line interface (CLI) around the [Kafka Connect REST Interface](http://docs.confluent.io/2.0.1/connect/userguide.html#rest-interface) to manage connectors. It is used in a git like fashion where the first program argument indicates the command: it can be one of `[ps|get|rm|create|run]`.
 
 The CLI is meant to behave as a good unix citizen: input from `stdin`; output to `stdout`; out of band info to `stderr` and non-zero exit status on error. Commands dealing with configuration expect or produce data in .properties style: `key=value` lines and comments start with a `#`.
 
     kafconcli 1.0
-    Usage: kafconcli [ls|get|rm|create|run] [options] [<connector-name>...]
+    Usage: kafconcli [ps|get|rm|create|run] [options] [<connector-name>...]
 
       --help
             prints this usage text
       -e <value> | --endpoint <value>
             Kafka REST URL, default is http://localhost:8083/
 
-    Command: ls
+    Command: ps
     list active connectors names.
 
     Command: get
@@ -41,11 +41,11 @@ Clone this repository, do a `mvn package` and run the jar in a way you prefer, f
 Get Active Connectors
 ---------------------
 
-Command: `ls`
+Command: `ps`
 
 Example:
 
-    $ ./cli ls
+    $ ./cli ps
     twitter-source
 
 Get Connector Information

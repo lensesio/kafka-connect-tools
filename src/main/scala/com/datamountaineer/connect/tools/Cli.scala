@@ -8,7 +8,7 @@ import scala.util.{Failure, Success}
 
 object AppCommand extends Enumeration {
   type AppCommand = Value
-  val NONE, LIST, GET, DELETE, CREATE, RUN  = Value
+  val NONE, LIST_ACTIVE, GET, DELETE, CREATE, RUN  = Value
 }
 import AppCommand._
 
@@ -28,7 +28,7 @@ object ExecuteCommand {
     lazy val connector = cfg.connectorName.get
 
     val res = cfg.cmd match {
-      case LIST => api.activeConnectorNames.map(fmt.connectorNames).map(Some(_))
+      case LIST_ACTIVE => api.activeConnectorNames.map(fmt.connectorNames).map(Some(_))
       case GET => api.connectorInfo(connector).map(fmt.connectorInfo).map(Some(_))
       case DELETE => api.delete(connector).map(_ => None)
       case CREATE => api.addConnector(connector, configuration).map(fmt.connectorInfo).map(Some(_))
@@ -70,7 +70,7 @@ object Cli {
       opt[String]('e', "endpoint") action { (x, c) =>
         c.copy(url = x) } text(s"Kafka REST URL, default is ${Defaults.BaseUrl}")
 
-      cmd("ls") action { (_, c) => c.copy(cmd = LIST) } text "list active connectors names." children()
+      cmd("ps") action { (_, c) => c.copy(cmd = LIST_ACTIVE) } text "list active connectors names." children()
       cmd("get") action { (_, c) => c.copy(cmd = GET) } text "get information about the specified connector." children()
       cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "remove the specified connector." children()
       cmd("create") action { (_, c) => c.copy(cmd = CREATE) } text "create the specified connector with the .properties from stdin; the connector cannot already exist." children()
@@ -78,11 +78,11 @@ object Cli {
 
       arg[String]("<connector-name>") optional() action { (x, c) =>
         c.copy(connectorName = Some(x))
-      } text ("connector name(s)")
+      } text ("connector name")
 
       checkConfig { c =>
         if (c.cmd == NONE) failure("Command expected.")
-        else if (c.cmd != LIST && c.connectorName.isEmpty) failure("Please specify the connector-name")
+        else if (c.cmd != LIST_ACTIVE && c.connectorName.isEmpty) failure("Please specify the connector-name")
         else success
       }
     }
