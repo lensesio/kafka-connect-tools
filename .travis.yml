@@ -6,4 +6,3 @@ install: gradle check
 script: gradle fatJar
 notifications:
   slack: datamountaineers:gpg5e7VabFjAT1gQZqwxgsqP
-travis encrypt "datamountaineers:gpg5e7VabFjAT1gQZqwxgsqP" --add notifications.slack
