@@ -10,10 +10,12 @@ import spray.http._
 case class ErrorMessage(error_code: Int, message: String)
 case class Task(connector: String, task: Int)
 case class ConnectorInfo(name: String, config: Map[String,String], tasks: List[Task])
+case class TasklessConnectorInfo(name: String, config: Map[String,String])
 
 object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val task = jsonFormat2(Task)
   implicit val connectorinfo = jsonFormat3(ConnectorInfo)
+  implicit val tasklessconnectorinfo = jsonFormat2(TasklessConnectorInfo)
   implicit val errormsg = jsonFormat2(ErrorMessage)
 }
 
@@ -73,18 +75,17 @@ class KafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = ScalajHttp
     req[ConnectorInfo](s"/connectors/${name}").get
   }
 
-  def addConnector(name: String, config: String) : ConnectorInfo = {
-    import MyJsonProtocol.connectorinfo
-    req[ConnectorInfo](s"/connectors","POST",
-      s"""{
-         |  "name": "${name}",
-         |  "config": ${config}
-         |}""".stripMargin).get
+  def addConnector(name: String, config: Map[String,String]) : ConnectorInfo = {
+    import MyJsonProtocol._
+
+    req[ConnectorInfo](s"/connectors", "POST",
+      TasklessConnectorInfo(name, config).toJson.toString).get
   }
 
-  def updateConnector(name: String, config: String) : ConnectorInfo = {
-    import MyJsonProtocol.connectorinfo
-    req[ConnectorInfo](s"/connectors/${name}/config","PUT", config).get
+  def updateConnector(name: String, config: Map[String,String]) : ConnectorInfo = {
+    import MyJsonProtocol._
+    req[ConnectorInfo](s"/connectors/${name}/config", "PUT",
+      config.toJson.toString).get
   }
 
   def delete(name: String) = {

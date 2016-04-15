@@ -20,7 +20,7 @@ object ExecuteCommand {
     val api = new KafkaConnectApi(new java.net.URI(cfg.url))
     val fmt = new PropertiesFormatter()
 
-    lazy val configuration = propsToJson(allStdIn.toSeq)
+    lazy val configuration = propsToMap(allStdIn.toSeq)
 
     cfg.cmd match {
       case LIST => println(fmt.connectorNames(api.activeConnectorNames))
@@ -34,14 +34,16 @@ object ExecuteCommand {
   // Returns an iterator that reads stdin until EOF.
   def allStdIn = Iterator.
     continually(io.StdIn.readLine).
-    takeWhile(x => {x != null})
+    takeWhile(x => {
+      x != null
+    })
 
-  // Translates a .properties key values into a json map. What can possibly go wrong?
-  lazy val R = "([^#].*)=(.*)".r
-  def propsToJson(s:Seq[String]) = "{" + s.map(_ match {
-    case R(k,v) => s""""${k.trim}":"${v.trim}""""
-    case _ => ""
-  }).filterNot(_.isEmpty).mkString(", ") + "}"
+  // Translates .properties key values into a String->String map using a regex -- what can possibly go wrong?
+  lazy val keyValueRegex = "([^#].*)=(.*)".r
+  def propsToMap(s: Seq[String]): Map[String, String] = s.flatMap(_ match {
+    case keyValueRegex(k, v) => Some((k.trim, v.trim))
+    case _ => None
+  }).toMap
 }
 
 // Entry point, translates arguments into a Config

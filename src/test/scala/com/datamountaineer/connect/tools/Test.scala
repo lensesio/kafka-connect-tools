@@ -14,7 +14,8 @@ class ApiUnitTests extends FunSuite with Matchers with MockFactory {
   val acceptHeader = "Accept" -> "application/json"
   val contentTypeHeader = "Content-Type" -> "application/json"
 
-  def verifyingHttpClient(endpoint: String, method: String, status: Int, resp: Option[String], verifyBody: String=>Unit = a=>{}) = {
+  // creates a HttpClient mock that verifies input and produces output
+  def verifyingHttpClient(endpoint: String, method: String, status: Int, resp: Option[String], verifyBody: String => Unit = a => {}) = {
     new HttpClient {
       def request(url: java.net.URI, method: String, hdrs: Seq[(String, String)], reqBody: Option[String]): Try[(Int, Option[String])] = {
         url shouldEqual URL.resolve(endpoint)
@@ -39,23 +40,23 @@ class ApiUnitTests extends FunSuite with Matchers with MockFactory {
   }
 
   test("addConnector") {
-    val verifyBody = (s:String) => {
+    val verifyBody = (s: String) => {
       val jobj = s.parseJson.asJsObject
       jobj.fields("name").convertTo[String] shouldBe "some"
-      jobj.fields("config").convertTo[Map[String,String]] shouldBe Map("prop"->"val")
+      jobj.fields("config").convertTo[Map[String, String]] shouldBe Map("prop" -> "val")
     }
     new KafkaConnectApi(URL,
       verifyingHttpClient("/connectors", "POST", 200, Some("""{"name":"nom","config":{"k":"v"},"tasks":[{"connector":"c0","task":5}]}"""), verifyBody)
-    ).addConnector("some","""{"prop":"val"}""") shouldEqual ConnectorInfo("nom", Map("k" -> "v"), List(Task("c0", 5)))
+    ).addConnector("some", Map("prop" -> "val")) shouldEqual ConnectorInfo("nom", Map("k" -> "v"), List(Task("c0", 5)))
   }
 
   test("updateConnector") {
-    val verifyBody = (s:String) => {
-      val jobj = s.parseJson.convertTo[Map[String,String]] shouldBe Map("prop"->"val")
+    val verifyBody = (s: String) => {
+      val jobj = s.parseJson.convertTo[Map[String, String]] shouldBe Map("prop" -> "val")
     }
     new KafkaConnectApi(URL,
       verifyingHttpClient("/connectors/nome/config", "PUT", 200, Some("""{"name":"nom","config":{"k":"v"},"tasks":[{"connector":"c0","task":5}]}"""), verifyBody)
-    ).updateConnector("nome","""{"prop":"val"}""") shouldEqual ConnectorInfo("nom", Map("k" -> "v"), List(Task("c0", 5)))
+    ).updateConnector("nome", Map("prop" -> "val")) shouldEqual ConnectorInfo("nom", Map("k" -> "v"), List(Task("c0", 5)))
   }
 
   test("delete") {
@@ -63,6 +64,4 @@ class ApiUnitTests extends FunSuite with Matchers with MockFactory {
       verifyingHttpClient("/connectors/nome", "DELETE", 200, None)
     ).delete("nome")
   }
-
-
 }
