@@ -10,6 +10,7 @@
     <java.version>1.8</java.version>
     <scala.version>2.11.7</scala.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <scalatest.version>2.2.6</scalatest.version>
   </properties>
   <dependencies>
     <dependency>
@@ -32,9 +33,92 @@
       <artifactId>scopt_2.11</artifactId>
       <version>3.4.0</version>
     </dependency>
+      <dependency>
+          <groupId>com.typesafe.akka</groupId>
+          <artifactId>akka-actor_2.11</artifactId>
+          <version>2.4.3</version>
+      </dependency>
+      <dependency>
+          <groupId>io.spray</groupId>
+          <artifactId>spray-can_2.11</artifactId>
+          <version>1.3.3</version>
+      </dependency>
+
+      <dependency>
+          <groupId>org.scalamock</groupId>
+          <artifactId>scalamock-scalatest-support_2.11</artifactId>
+          <version>3.2.2</version>
+      </dependency>
+      <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_2.11</artifactId>
+      <version>${scalatest.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <!-- make sure wrong scala version is not pulled in -->
+          <groupId>org.scala-lang</groupId>
+          <artifactId>scala-library</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>net.alchim31.maven</groupId>
+          <artifactId>scala-maven-plugin</artifactId>
+          <version>3.2.1</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.10</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/main/scala</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-test-source</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/test/scala</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest-maven-plugin</artifactId>
+        <version>1.0</version>
+        <executions>
+          <execution>
+            <id>test</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+          	
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
@@ -54,22 +138,21 @@
       <plugin>
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>
-        <version>3.2.0</version>
+        <version>3.2.1</version>
         <configuration>
-          <recompileMode>incremental</recompileMode>
+          <args>
+            <!--
+               In combination with Scala 2.11, `-Xexperimental` enables SAM
+               for Java 8 lambda support.  Make sure `kafka.scala.version`
+               is set to `2.11`, not `2.10`.
+            -->
+            <arg>-Xexperimental</arg>
+          </args>
         </configuration>
         <executions>
           <execution>
-            <id>scala-compile</id>
-            <phase>process-resources</phase>
             <goals>
               <goal>compile</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>scala-test-compile</id>
-            <phase>process-test-resources</phase>
-            <goals>
               <goal>testCompile</goal>
             </goals>
           </execution>

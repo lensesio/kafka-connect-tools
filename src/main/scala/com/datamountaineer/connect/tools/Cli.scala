@@ -1,6 +1,10 @@
 package com.datamountaineer.connect.tools
 
+import java.io.{PrintWriter, StringWriter}
+
 import scopt._
+
+import scala.util.{Failure, Success}
 
 object AppCommand extends Enumeration {
   type AppCommand = Value
@@ -17,31 +21,43 @@ case class Arguments(cmd: AppCommand= NONE, url: String = Defaults.BaseUrl, conn
 // Handles the AppCommand Arguments
 object ExecuteCommand {
   def apply(cfg: Arguments) = {
-    val api = new KafkaConnectApi(new java.net.URI(cfg.url))
+    val api = new RestKafkaConnectApi(new java.net.URI(cfg.url))
     val fmt = new PropertiesFormatter()
 
-    lazy val configuration = propsToJson(allStdIn.toSeq)
+    lazy val configuration = propsToMap(allStdIn.toSeq)
 
-    cfg.cmd match {
-      case LIST => println(fmt.connectorNames(api.activeConnectorNames))
-      case DELETE => cfg.connectorNames.foreach(api.delete)
-      case CREATE => println(cfg.connectorNames.map(api.addConnector(_, configuration)).map(fmt.connectorInfo).mkString("\n"))
-      case RUN => println(cfg.connectorNames.map(api.updateConnector(_, configuration)).map(fmt.connectorInfo).mkString("\n"))
-      case GET => println(cfg.connectorNames.map(api.connectorInfo).map(fmt.connectorInfo).mkString("\n"))
+    lazy val name = cfg.connectorNames.head
+
+    val res = cfg.cmd match {
+      case LIST => api.activeConnectorNames.map(fmt.connectorNames).map(Some(_))
+      case GET => api.connectorInfo(name).map(fmt.connectorInfo).map(Some(_))
+      case DELETE => api.delete(name).map(_ => None)
+      case CREATE => api.addConnector(name, configuration).map(fmt.connectorInfo).map(Some(_))
+      case RUN => api.updateConnector(name, configuration).map(fmt.connectorInfo).map(Some(_))
     }
+    res.recover{
+      case ApiErrorException(e) => Some(e)
+      case e: Exception => val sw = new StringWriter(); e.printStackTrace(new PrintWriter(sw)); Some(sw.toString) //the sad state of Java
+    }.foreach{
+      case Some(v) => println(v)
+      case None =>
+    }
+    res
   }
 
   // Returns an iterator that reads stdin until EOF.
   def allStdIn = Iterator.
     continually(io.StdIn.readLine).
-    takeWhile(x => {x != null})
+    takeWhile(x => {
+      x != null
+    })
 
-  // Translates a .properties key values into a json map. What can possibly go wrong?
-  lazy val R = "([^#].*)=(.*)".r
-  def propsToJson(s:Seq[String]) = "{" + s.map(_ match {
-    case R(k,v) => s""""${k.trim}":"${v.trim}""""
-    case _ => ""
-  }).filterNot(_.isEmpty).mkString(", ") + "}"
+  // Translates .properties key values into a String->String map using a regex -- what can possibly go wrong?
+  lazy val keyValueRegex = "([^#].*)=(.*)".r
+  def propsToMap(s: Seq[String]): Map[String, String] = s.flatMap(_ match {
+    case keyValueRegex(k, v) => Some((k.trim, v.trim))
+    case _ => None
+  }).toMap
 }
 
 // Entry point, translates arguments into a Config
@@ -74,7 +90,7 @@ object Cli {
 
     parser.parse(args, Arguments()) match {
       case Some(as) =>
-        ExecuteCommand(as)
+        if (ExecuteCommand(as).isFailure) sys.exit(1)
       case None =>
     }
   }
