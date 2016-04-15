@@ -1,6 +1,10 @@
 package com.datamountaineer.connect.tools
 
+import java.io.{PrintWriter, StringWriter}
+
 import scopt._
+
+import scala.util.{Failure, Success}
 
 object AppCommand extends Enumeration {
   type AppCommand = Value
@@ -17,18 +21,28 @@ case class Arguments(cmd: AppCommand= NONE, url: String = Defaults.BaseUrl, conn
 // Handles the AppCommand Arguments
 object ExecuteCommand {
   def apply(cfg: Arguments) = {
-    val api = new KafkaConnectApi(new java.net.URI(cfg.url))
+    val api = new RestKafkaConnectApi(new java.net.URI(cfg.url))
     val fmt = new PropertiesFormatter()
 
     lazy val configuration = propsToMap(allStdIn.toSeq)
 
-    cfg.cmd match {
-      case LIST => println(fmt.connectorNames(api.activeConnectorNames))
-      case DELETE => cfg.connectorNames.foreach(api.delete)
-      case CREATE => println(cfg.connectorNames.map(api.addConnector(_, configuration)).map(fmt.connectorInfo).mkString("\n"))
-      case RUN => println(cfg.connectorNames.map(api.updateConnector(_, configuration)).map(fmt.connectorInfo).mkString("\n"))
-      case GET => println(cfg.connectorNames.map(api.connectorInfo).map(fmt.connectorInfo).mkString("\n"))
+    lazy val name = cfg.connectorNames.head
+
+    val res = cfg.cmd match {
+      case LIST => api.activeConnectorNames.map(fmt.connectorNames).map(Some(_))
+      case GET => api.connectorInfo(name).map(fmt.connectorInfo).map(Some(_))
+      case DELETE => api.delete(name).map(_ => None)
+      case CREATE => api.addConnector(name, configuration).map(fmt.connectorInfo).map(Some(_))
+      case RUN => api.updateConnector(name, configuration).map(fmt.connectorInfo).map(Some(_))
     }
+    res.recover{
+      case ApiErrorException(e) => Some(e)
+      case e: Exception => val sw = new StringWriter(); e.printStackTrace(new PrintWriter(sw)); Some(sw.toString) //the sad state of Java
+    }.foreach{
+      case Some(v) => println(v)
+      case None =>
+    }
+    res
   }
 
   // Returns an iterator that reads stdin until EOF.
@@ -76,7 +90,7 @@ object Cli {
 
     parser.parse(args, Arguments()) match {
       case Some(as) =>
-        ExecuteCommand(as)
+        if (ExecuteCommand(as).isFailure) sys.exit(1)
       case None =>
     }
   }

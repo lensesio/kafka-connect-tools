@@ -28,15 +28,15 @@ class ApiUnitTests extends FunSuite with Matchers with MockFactory {
   }
 
   test("activeConnectorNames") {
-    new KafkaConnectApi(URL,
+    new RestKafkaConnectApi(URL,
       verifyingHttpClient("/connectors", "GET", 200, Some("""["a","b"]"""))
-    ).activeConnectorNames shouldEqual "a" :: "b" :: Nil
+    ).activeConnectorNames shouldEqual Success("a" :: "b" :: Nil)
   }
 
   test("connectorInfo") {
-    new KafkaConnectApi(URL,
+    new RestKafkaConnectApi(URL,
       verifyingHttpClient("/connectors/some", "GET", 200, Some("""{"name":"nom","config":{"k":"v"},"tasks":[{"connector":"c0","task":5}]}"""))
-    ).connectorInfo("some") shouldEqual ConnectorInfo("nom", Map("k" -> "v"), List(Task("c0", 5)))
+    ).connectorInfo("some") shouldEqual Success(ConnectorInfo("nom", Map("k" -> "v"), List(Task("c0", 5))))
   }
 
   test("addConnector") {
@@ -45,23 +45,23 @@ class ApiUnitTests extends FunSuite with Matchers with MockFactory {
       jobj.fields("name").convertTo[String] shouldBe "some"
       jobj.fields("config").convertTo[Map[String, String]] shouldBe Map("prop" -> "val")
     }
-    new KafkaConnectApi(URL,
+    new RestKafkaConnectApi(URL,
       verifyingHttpClient("/connectors", "POST", 200, Some("""{"name":"nom","config":{"k":"v"},"tasks":[{"connector":"c0","task":5}]}"""), verifyBody)
-    ).addConnector("some", Map("prop" -> "val")) shouldEqual ConnectorInfo("nom", Map("k" -> "v"), List(Task("c0", 5)))
+    ).addConnector("some", Map("prop" -> "val")) shouldEqual Success(ConnectorInfo("nom", Map("k" -> "v"), List(Task("c0", 5))))
   }
 
   test("updateConnector") {
     val verifyBody = (s: String) => {
       val jobj = s.parseJson.convertTo[Map[String, String]] shouldBe Map("prop" -> "val")
     }
-    new KafkaConnectApi(URL,
+    new RestKafkaConnectApi(URL,
       verifyingHttpClient("/connectors/nome/config", "PUT", 200, Some("""{"name":"nom","config":{"k":"v"},"tasks":[{"connector":"c0","task":5}]}"""), verifyBody)
-    ).updateConnector("nome", Map("prop" -> "val")) shouldEqual ConnectorInfo("nom", Map("k" -> "v"), List(Task("c0", 5)))
+    ).updateConnector("nome", Map("prop" -> "val")) shouldEqual Success(ConnectorInfo("nom", Map("k" -> "v"), List(Task("c0", 5))))
   }
 
   test("delete") {
-    new KafkaConnectApi(URL,
+    new RestKafkaConnectApi(URL,
       verifyingHttpClient("/connectors/nome", "DELETE", 200, None)
-    ).delete("nome")
+    ).delete("nome") shouldEqual Success()
   }
 }

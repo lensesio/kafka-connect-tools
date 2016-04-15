@@ -40,8 +40,18 @@ object ScalajHttpClient extends HttpClient {
   }
 }
 
+case class ApiErrorException(e: String) extends Exception
+
+trait KafkaConnectApi {
+  def activeConnectorNames(): Try[Seq[String]]
+  def connectorInfo(name: String): Try[ConnectorInfo]
+  def addConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo]
+  def updateConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo]
+  def delete(name: String) : Try[Unit]
+}
+
 // http://docs.confluent.io/2.1.0-alpha1/connect/userguide.html#rest-interface
-class KafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = ScalajHttpClient) {
+class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = ScalajHttpClient) extends KafkaConnectApi {
   val headers = Seq("Accept" -> "application/json", "Content-Type" -> "application/json")
 
   private def non2xxException(status: Int, respBody: Option[String]): Exception = {
@@ -49,13 +59,14 @@ class KafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = ScalajHttp
     // try to deserialize message from body
     try {
       val msg = respBody.get.parseJson.convertTo[ErrorMessage]
-      new Exception(s"${msg.message} (${msg.error_code})")
+      new ApiErrorException(s"Error: the Kafka Connect API returned: ${msg.message} (${msg.error_code})")
     } catch {
-      case _: Throwable => new Exception(s"${status}")
+      case _: Throwable => new Exception(s"Error: the Kafka Connect API returned status code ${status}")
     }
   }
 
   // constructs url from endpoint and base, inserts headers, etc.
+  // throws!
   private def req[T: JsonReader](endpoint: String, method: String = "GET", data: String = null): Option[T] = {
     httpClient.request(baseUrl.resolve(endpoint), method, headers, Option(data))
     match {
@@ -66,29 +77,28 @@ class KafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = ScalajHttp
     }
   }
 
-  def activeConnectorNames(): Seq[String] = {
-    req[List[String]]("/connectors").get
+  def activeConnectorNames(): Try[Seq[String]] = {
+    Try(req[List[String]]("/connectors").get)
   }
 
-  def connectorInfo(name: String): ConnectorInfo = {
+  def connectorInfo(name: String): Try[ConnectorInfo] = {
     import MyJsonProtocol.connectorinfo
-    req[ConnectorInfo](s"/connectors/${name}").get
+    Try(req[ConnectorInfo](s"/connectors/${name}").get)
   }
 
-  def addConnector(name: String, config: Map[String,String]) : ConnectorInfo = {
+  def addConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo] = {
     import MyJsonProtocol._
-
-    req[ConnectorInfo](s"/connectors", "POST",
-      TasklessConnectorInfo(name, config).toJson.toString).get
+    Try(req[ConnectorInfo](s"/connectors", "POST",
+      TasklessConnectorInfo(name, config).toJson.toString).get)
   }
 
-  def updateConnector(name: String, config: Map[String,String]) : ConnectorInfo = {
+  def updateConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo] = {
     import MyJsonProtocol._
-    req[ConnectorInfo](s"/connectors/${name}/config", "PUT",
-      config.toJson.toString).get
+    Try(req[ConnectorInfo](s"/connectors/${name}/config", "PUT",
+      config.toJson.toString).get)
   }
 
-  def delete(name: String) = {
-    req[Unit](s"/connectors/${name}","DELETE")
+  def delete(name: String) : Try[Unit] = {
+    Try(req[Unit](s"/connectors/${name}","DELETE"))
   }
 }
