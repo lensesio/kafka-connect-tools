@@ -16,7 +16,7 @@ object Defaults {
   val BaseUrl = "http://localhost:8083/"
 }
 
-case class Arguments(cmd: AppCommand= NONE, url: String = Defaults.BaseUrl, connectorNames: Seq[String] = Seq())
+case class Arguments(cmd: AppCommand= NONE, url: String = Defaults.BaseUrl, connectorName: Option[String] = None)
 
 // Handles the AppCommand Arguments
 object ExecuteCommand {
@@ -25,15 +25,14 @@ object ExecuteCommand {
     val fmt = new PropertiesFormatter()
 
     lazy val configuration = propsToMap(allStdIn.toSeq)
-
-    lazy val name = cfg.connectorNames.head
+    lazy val connector = cfg.connectorName.get
 
     val res = cfg.cmd match {
       case LIST => api.activeConnectorNames.map(fmt.connectorNames).map(Some(_))
-      case GET => api.connectorInfo(name).map(fmt.connectorInfo).map(Some(_))
-      case DELETE => api.delete(name).map(_ => None)
-      case CREATE => api.addConnector(name, configuration).map(fmt.connectorInfo).map(Some(_))
-      case RUN => api.updateConnector(name, configuration).map(fmt.connectorInfo).map(Some(_))
+      case GET => api.connectorInfo(connector).map(fmt.connectorInfo).map(Some(_))
+      case DELETE => api.delete(connector).map(_ => None)
+      case CREATE => api.addConnector(connector, configuration).map(fmt.connectorInfo).map(Some(_))
+      case RUN => api.updateConnector(connector, configuration).map(fmt.connectorInfo).map(Some(_))
     }
     res.recover{
       case ApiErrorException(e) => Some(e)
@@ -72,18 +71,18 @@ object Cli {
         c.copy(url = x) } text(s"Kafka REST URL, default is ${Defaults.BaseUrl}")
 
       cmd("ls") action { (_, c) => c.copy(cmd = LIST) } text "list active connectors names." children()
-      cmd("get") action { (_, c) => c.copy(cmd = GET) } text "get information about the specified connector(s)." children()
-      cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "remove the specified connector(s)." children()
+      cmd("get") action { (_, c) => c.copy(cmd = GET) } text "get information about the specified connector." children()
+      cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "remove the specified connector." children()
       cmd("create") action { (_, c) => c.copy(cmd = CREATE) } text "create the specified connector with the .properties from stdin; the connector cannot already exist." children()
       cmd("run") action { (_, c) => c.copy(cmd = RUN) } text "create or update the specified connector with the .properties from stdin." children()
 
-      arg[String]("<connector-name>...") unbounded() optional() action { (x, c) =>
-        c.copy(connectorNames = c.connectorNames :+ x)
+      arg[String]("<connector-name>") optional() action { (x, c) =>
+        c.copy(connectorName = Some(x))
       } text ("connector name(s)")
 
       checkConfig { c =>
         if (c.cmd == NONE) failure("Command expected.")
-        else if (c.cmd != LIST && c.connectorNames.length==0) failure("Please specify the connector-name(s)")
+        else if (c.cmd != LIST && c.connectorName.isEmpty) failure("Please specify the connector-name")
         else success
       }
     }
@@ -92,6 +91,7 @@ object Cli {
       case Some(as) =>
         if (ExecuteCommand(as).isFailure) sys.exit(1)
       case None =>
+        sys.exit(1)
     }
   }
 }
