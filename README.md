@@ -33,6 +33,14 @@ The CLI is meant to behave as a good unix citizen: input from `stdin`; output to
       <connector-name>...
             connector name(s)
 
+To Build
+========
+
+```bash
+gradle fatJar
+```
+
+
 Usage
 =====
 
