@@ -1,10 +1,7 @@
 package com.datamountaineer.connect.tools
 
 import java.io.{PrintWriter, StringWriter}
-
 import scopt._
-
-import scala.util.{Failure, Success}
 
 object AppCommand extends Enumeration {
   type AppCommand = Value
@@ -61,9 +58,8 @@ object ExecuteCommand {
 
 // Entry point, translates arguments into a Config
 object Cli {
-  def main(args: Array[String]): Unit = {
-
-    val parser = new OptionParser[Arguments]("kafconcli") {
+  def parseProgramArgs(args: Array[String]) = {
+    new OptionParser[Arguments]("kafconcli") {
       head("kafconcli", "1.0")
       help("help") text ("prints this usage text")
 
@@ -85,9 +81,11 @@ object Cli {
         else if (c.cmd != LIST_ACTIVE && c.connectorName.isEmpty) failure("Please specify the connector-name")
         else success
       }
-    }
+    }.parse(args, Arguments())
+  }
 
-    parser.parse(args, Arguments()) match {
+  def main(args: Array[String]): Unit = {
+    parseProgramArgs(args) match {
       case Some(as) =>
         if (ExecuteCommand(as).isFailure) sys.exit(1)
       case None =>
@@ -95,4 +93,3 @@ object Cli {
     }
   }
 }
-
