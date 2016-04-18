@@ -12,14 +12,25 @@ import AppCommand._
 
 /** Container for default program argument values */
 object Defaults {
+  /** Where the REST service lives by default */
   val BaseUrl = "http://localhost:8083/"
 }
 
-/** Holds interpreted program arguments */
+/**
+  * Holds interpreted program arguments
+  * @param cmd the AppCommand to perform
+  * @param url the url of the REST service, defaults to Defaults.BaseUrl
+  * @param connectorName an optional connector name that is the subject of the command
+  */
 case class Arguments(cmd: AppCommand= NONE, url: String = Defaults.BaseUrl, connectorName: Option[String] = None)
 
 /** Performs the action contained in the Arguments on RestKafkaConnectApi */
 object ExecuteCommand {
+  /**
+    * Performs the action contained in the Arguments on RestKafkaConnectApi
+    * @param cfg an Arguments object that contains what to do
+    * @return A Try that indicates success or failure
+    */
   def apply(cfg: Arguments) = {
     val api = new RestKafkaConnectApi(new java.net.URI(cfg.url))
     val fmt = new PropertiesFormatter()
@@ -36,7 +47,7 @@ object ExecuteCommand {
     }
     res.recover{
       case ApiErrorException(e) => Some(e)
-      case e: Exception => val sw = new StringWriter(); e.printStackTrace(new PrintWriter(sw)); Some(sw.toString) //the sad state of Java
+      case e: Exception => val sw = new StringWriter(); e.printStackTrace(new PrintWriter(sw)); Some(sw.toString)
     }.foreach{
       case Some(v) => println(v)
       case None =>
@@ -44,7 +55,10 @@ object ExecuteCommand {
     res
   }
 
-  /** Returns an iterator that reads stdin until EOF */
+  /**
+    * Returns an iterator that reads stdin until EOF
+    * @return an Iterator that reads stdin
+    */
   def allStdIn = Iterator.
     continually(io.StdIn.readLine).
     takeWhile(x => {
@@ -53,15 +67,24 @@ object ExecuteCommand {
 
   /** Regex that is used in propsToMap */
   lazy val keyValueRegex = "([^#].*)=(.*)".r
-  /** Translates .properties key values into a String->String map using a regex */
-  def propsToMap(s: Seq[String]): Map[String, String] = s.flatMap(_ match {
+
+  /**
+    * Translates .properties key values into a String->String map using a regex. Lines starting with # are ignored.
+    * @param properties the lines containing the properties
+    * @return a map with key -> value
+    */
+  def propsToMap(properties: Seq[String]): Map[String, String] = properties.flatMap(_ match {
     case keyValueRegex(k, v) => Some((k.trim, v.trim))
     case _ => None
   }).toMap
 }
 
 object Cli {
-  /** Translates program arguments into an Arguments object */
+  /**
+    * Translates program arguments into an Arguments object
+    * @param args the program arguments
+    * @return an Arguments object
+    */
   def parseProgramArgs(args: Array[String]) = {
     new OptionParser[Arguments]("kafconcli") {
       head("kafconcli", "1.0")
@@ -88,7 +111,10 @@ object Cli {
     }.parse(args, Arguments())
   }
 
-  /** Entry point */
+  /**
+    * Entry point
+    * @param args program arguments
+    */
   def main(args: Array[String]): Unit = {
     parseProgramArgs(args) match {
       case Some(as) =>
