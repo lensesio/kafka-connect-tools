@@ -4,14 +4,18 @@ import scalaj.http.{Http, BaseHttp, HttpResponse}
 import spray.json._
 import DefaultJsonProtocol._
 import scala.util.{Try, Success, Failure}
-
 import spray.http._
 
+/** Equivalent of http://docs.confluent.io/2.1.0-alpha1/connect/userguide.html#statuses-errors */
 case class ErrorMessage(error_code: Int, message: String)
+/** A Task structure as embedded in e.g. http://docs.confluent.io/2.1.0-alpha1/connect/userguide.html#post--connectors */
 case class Task(connector: String, task: Int)
+/** A ConnectorInfo as e.g. http://docs.confluent.io/2.1.0-alpha1/connect/userguide.html#post--connectors */
 case class ConnectorInfo(name: String, config: Map[String,String], tasks: List[Task])
+/** A TasklessConnectorInfo as e.g. http://docs.confluent.io/2.1.0-alpha1/connect/userguide.html#post--connectors */
 case class TasklessConnectorInfo(name: String, config: Map[String,String])
 
+/** Implicits for JSON (de)serialization */
 object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val task = jsonFormat2(Task)
   implicit val connectorinfo = jsonFormat3(ConnectorInfo)
@@ -19,14 +23,18 @@ object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val errormsg = jsonFormat2(ErrorMessage)
 }
 
+/** Allows one to do HTTP requests */
 trait HttpClient {
-  def request(url: java.net.URI, method: String, hdrs: Seq[(String, String)], reqBody: Option[String]): Try[(Int, Option[String])]
+  /** Allows one to do HTTP requests. Returns a statuscode and optionally a body. */
+  def request(url: java.net.URI, method: String, headers: Seq[(String, String)], reqBody: Option[String]): Try[(Int, Option[String])]
 }
 
+/** Allows one to do HTTP requests using the Scalaj client */
 object ScalajHttpClient extends HttpClient {
-  def request(url: java.net.URI, method: String, hdrs: Seq[(String, String)], reqBody: Option[String]): Try[(Int, Option[String])] = {
+  /** Allows one to do HTTP requests. Returns a statuscode and optionally a body. */
+  def request(url: java.net.URI, method: String, headers: Seq[(String, String)], reqBody: Option[String]): Try[(Int, Option[String])] = {
     try {
-      val r = Http(url.toString).headers(hdrs)
+      val r = Http(url.toString).headers(headers)
       (reqBody match {
         case Some(body) => r.postData(body)
         case None => r
@@ -40,20 +48,32 @@ object ScalajHttpClient extends HttpClient {
   }
 }
 
+/** An Exception to hold errors as yielded by the REST API */
 case class ApiErrorException(e: String) extends Exception
 
+/** Kafka Connect Api interface */
 trait KafkaConnectApi {
+  /** Returns the names of the currently active connectors */
   def activeConnectorNames(): Try[Seq[String]]
+
+  /** Returns a ConnectorInfo given the connector's name */
   def connectorInfo(name: String): Try[ConnectorInfo]
-  def addConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo]
-  def updateConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo]
-  def delete(name: String) : Try[Unit]
+
+  /** Creates a new connector, initialized with a string->string map. The connector cannot already exist. Returns its ConnectorInfo */
+  def addConnector(name: String, config: Map[String, String]): Try[ConnectorInfo]
+
+  /** Updates or creates a new connector, initializes it with a string->string map. The connector may or may not already exist. Returns its ConnectorInfo */
+  def updateConnector(name: String, config: Map[String, String]): Try[ConnectorInfo]
+
+  /** Removes the specified connector */
+  def delete(name: String): Try[Unit]
 }
 
-// http://docs.confluent.io/2.1.0-alpha1/connect/userguide.html#rest-interface
+/** Kafka Connect Api interface */
 class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = ScalajHttpClient) extends KafkaConnectApi {
   val headers = Seq("Accept" -> "application/json", "Content-Type" -> "application/json")
 
+  /** Translates a statuscode, body into an appropriate Exception */
   private def non2xxException(status: Int, respBody: Option[String]): Exception = {
     import MyJsonProtocol.errormsg
     // try to deserialize message from body
@@ -65,8 +85,7 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     }
   }
 
-  // constructs url from endpoint and base, inserts headers, etc.
-  // throws!
+  /** Performs a request to some endpoint. Constructs url from endpoint and base, inserts headers, (de)serializes, etc. */
   private def req[T: JsonReader](endpoint: String, method: String = "GET", data: String = null): Option[T] = {
     httpClient.request(baseUrl.resolve(endpoint), method, headers, Option(data))
     match {
@@ -77,27 +96,32 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     }
   }
 
+  /** Returns the names of the currently active connectors */
   def activeConnectorNames(): Try[Seq[String]] = {
     Try(req[List[String]]("/connectors").get)
   }
 
+  /** Returns a ConnectorInfo given the connector's name */
   def connectorInfo(name: String): Try[ConnectorInfo] = {
     import MyJsonProtocol.connectorinfo
     Try(req[ConnectorInfo](s"/connectors/${name}").get)
   }
 
+  /** Creates a new connector, initialized with a string->string map. The connector cannot already exist. Returns its ConnectorInfo */
   def addConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo] = {
     import MyJsonProtocol._
     Try(req[ConnectorInfo](s"/connectors", "POST",
       TasklessConnectorInfo(name, config).toJson.toString).get)
   }
 
+  /** Updates or creates a new connector, initializes it with a string->string map. The connector may or may not already exist. Returns its ConnectorInfo */
   def updateConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo] = {
     import MyJsonProtocol._
     Try(req[ConnectorInfo](s"/connectors/${name}/config", "PUT",
       config.toJson.toString).get)
   }
 
+  /** Removes the specified connector */
   def delete(name: String) : Try[Unit] = {
     Try(req[Unit](s"/connectors/${name}","DELETE"))
   }

@@ -3,19 +3,22 @@ package com.datamountaineer.connect.tools
 import java.io.{PrintWriter, StringWriter}
 import scopt._
 
+/** Enumeration of CLI commands */
 object AppCommand extends Enumeration {
   type AppCommand = Value
   val NONE, LIST_ACTIVE, GET, DELETE, CREATE, RUN  = Value
 }
 import AppCommand._
 
+/** Container for default program argument values */
 object Defaults {
   val BaseUrl = "http://localhost:8083/"
 }
 
+/** Holds interpreted program arguments */
 case class Arguments(cmd: AppCommand= NONE, url: String = Defaults.BaseUrl, connectorName: Option[String] = None)
 
-// Handles the AppCommand Arguments
+/** Performs the action contained in the Arguments on RestKafkaConnectApi */
 object ExecuteCommand {
   def apply(cfg: Arguments) = {
     val api = new RestKafkaConnectApi(new java.net.URI(cfg.url))
@@ -41,23 +44,24 @@ object ExecuteCommand {
     res
   }
 
-  // Returns an iterator that reads stdin until EOF.
+  /** Returns an iterator that reads stdin until EOF */
   def allStdIn = Iterator.
     continually(io.StdIn.readLine).
     takeWhile(x => {
       x != null
     })
 
-  // Translates .properties key values into a String->String map using a regex -- what can possibly go wrong?
+  /** Regex that is used in propsToMap */
   lazy val keyValueRegex = "([^#].*)=(.*)".r
+  /** Translates .properties key values into a String->String map using a regex */
   def propsToMap(s: Seq[String]): Map[String, String] = s.flatMap(_ match {
     case keyValueRegex(k, v) => Some((k.trim, v.trim))
     case _ => None
   }).toMap
 }
 
-// Entry point, translates arguments into a Config
 object Cli {
+  /** Translates program arguments into an Arguments object */
   def parseProgramArgs(args: Array[String]) = {
     new OptionParser[Arguments]("kafconcli") {
       head("kafconcli", "1.0")
@@ -84,6 +88,7 @@ object Cli {
     }.parse(args, Arguments())
   }
 
+  /** Entry point */
   def main(args: Array[String]): Unit = {
     parseProgramArgs(args) match {
       case Some(as) =>
