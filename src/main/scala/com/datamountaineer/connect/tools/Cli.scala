@@ -32,6 +32,8 @@ object ExecuteCommand {
     * @return A Try that indicates success or failure
     */
   def apply(cfg: Arguments) = {
+    if (cfg.connectorName.isEmpty)
+      require(cfg.cmd == LIST_ACTIVE)
     val api = new RestKafkaConnectApi(new java.net.URI(cfg.url))
     val fmt = new PropertiesFormatter()
 
