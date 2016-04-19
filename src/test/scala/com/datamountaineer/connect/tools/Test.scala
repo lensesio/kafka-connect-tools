@@ -1,5 +1,6 @@
 package com.datamountaineer.connect.tools
 
+import AppCommand._
 import org.scalatest.{FunSuite, Matchers}
 import org.scalamock.scalatest.MockFactory
 import spray.json._
@@ -7,6 +8,25 @@ import spray.json.{JsonReader, DefaultJsonProtocol}
 import DefaultJsonProtocol._
 
 import scala.util.{Success, Try}
+
+class MainCliUnitTests extends FunSuite with Matchers with MockFactory {
+  def split(s:String) = s.split(" ")
+
+  test("Valdid program arguments are parsed correctly") {
+    Cli.parseProgramArgs(split("ps")) shouldEqual Some(Arguments(LIST_ACTIVE, Defaults.BaseUrl, None))
+    Cli.parseProgramArgs(split("ps -e my_endpoint")) shouldEqual Some(Arguments(LIST_ACTIVE, "my_endpoint", None))
+    Cli.parseProgramArgs(split("rm killit -e my_endpoint")) shouldEqual Some(Arguments(DELETE, "my_endpoint", Some("killit")))
+    Cli.parseProgramArgs(split("get getit")) shouldEqual Some(Arguments(GET, Defaults.BaseUrl, Some("getit")))
+    Cli.parseProgramArgs(split("create createit")) shouldEqual Some(Arguments(CREATE, Defaults.BaseUrl, Some("createit")))
+    Cli.parseProgramArgs(split("run runit")) shouldEqual Some(Arguments(RUN, Defaults.BaseUrl, Some("runit")))
+  }
+
+  test("Invaldid program arguments are rejected") {
+    Cli.parseProgramArgs(split("fakecmd")) shouldEqual None
+    Cli.parseProgramArgs(split("rm")) shouldEqual None
+    Cli.parseProgramArgs(split("create good -j nonense")) shouldEqual None
+  }
+}
 
 class ApiUnitTests extends FunSuite with Matchers with MockFactory {
   val URL = new java.net.URI("http://localhost")
