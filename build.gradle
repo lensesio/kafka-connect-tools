@@ -114,8 +114,6 @@ task compile(dependsOn: 'compileScala')
 task fatJar(dependsOn : ['test', 'shadowJar'])
 task fatJarNoTest(dependsOn : 'shadowJar')
 
-javaDocs.dependsOn scaladoc
-
 println "Building ${name}-${version}"
 
 signing {
@@ -130,7 +128,6 @@ if (project.hasProperty('release')) {
             mavenDeployer {
                 // POM signature
                 beforeDeployment { MavenDeployment deployment ->
-
                     signing.signPom(deployment)
                 }
                 // Target repository
