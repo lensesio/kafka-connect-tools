@@ -174,8 +174,8 @@ if (project.hasProperty('release')) {
 
 }
 
-nexusStaging {
-    packageGroup = project.getGroup()
-    username = ossrhUsername
-    password = ossrhPassword
-}
+//nexusStaging {
+//    packageGroup = project.getGroup()
+//    username = ossrhUsername
+//    password = ossrhPassword
+//}
