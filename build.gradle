@@ -5,7 +5,7 @@ buildscript {
     dependencies {
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
         classpath 'com.github.maiflai:gradle-scalatest:0.9'
-        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.5.1"
+        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.5.3"
         classpath 'org.hibernate.build.gradle:gradle-maven-publish-auth:2.0.1'
     }
 }
@@ -65,6 +65,9 @@ dependencies {
     testRuntime 'org.pegdown:pegdown:1.1.0'
 }
 
+sourceSets.main.java.srcDirs = []
+sourceSets.test.java.srcDirs = []
+
 test {
     maxParallelForks = 1
     minHeapSize '256m'
@@ -86,6 +89,12 @@ task sourcesJar(type: Jar) {
     from sourceSets.main.allSource
 }
 
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+
 task scaladocJar(type: Jar) {
     classifier = 'scaladoc'
     from '../LICENSE'
@@ -93,7 +102,7 @@ task scaladocJar(type: Jar) {
 }
 
 artifacts {
-    archives scaladocJar, sourcesJar
+    archives javadocJar, scaladocJar, sourcesJar
 }
 
 tasks.withType(Tar) {
@@ -105,64 +114,71 @@ task compile(dependsOn: 'compileScala')
 task fatJar(dependsOn : ['test', 'shadowJar'])
 task fatJarNoTest(dependsOn : 'shadowJar')
 
-javadoc.dependsOn scaladoc
+javaDocs.dependsOn scaladoc
 
 println "Building ${name}-${version}"
 
+signing {
+    sign configurations.archives
+}
+
 if (project.hasProperty('release')) {
 
-    subprojects {
+    // OSSRH publication
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                // POM signature
+                beforeDeployment { MavenDeployment deployment ->
 
-        // OSSRH publication
-        uploadArchives {
-            repositories {
-                signing {
-                    required { shouldSign }
-                    sign configurations.archives
+                    signing.signPom(deployment)
+                }
+                // Target repository
+                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                    authentication(userName: ossrhUsername, password: ossrhPassword)
+                }
+                pom.project {
+                    name project.name
+                    description project.description
+                    packaging 'jar'
+                    url 'https://github.com/datamountaineer/kafka-connect-tools'
 
-                    mavenDeployer {
-                        // POM signature
-                        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-                        // Target repository
-                        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                            //authentication(userName: ossrhUser, password: ossrhPassword)
+                    scm {
+                        connection 'scm:git:https://github.com/datamountaineer/kafka-connect-tools.git'
+                        developerConnection 'scm:git:git@github.com:datamountaineer/kafka-connect-tools.git'
+                        url 'https://github.com/datamountaineer/kafka-connect-tools.git'
+                    }
+
+                    licenses {
+                        license {
+                            name 'Apache License 2.0'
+                            url 'http://www.apache.org/licenses/LICENSE-2.0.html'
+                            distribution 'repo'
                         }
-                        pom.project {
-                            name project.name
-                            description project.description
-                            packaging 'jar'
-                            url 'https://github.com/datamountaineer/kafka-connect-tools'
+                    }
 
-                            scm {
-                                connection 'scm:git:https://github.com/datamountaineer/kafka-connect-tools.git'
-                                developerConnection 'scm:git:git@github.com:datamountaineer/kafka-connect-tools.git'
-                                url 'https://github.com/datamountaineer/kafka-connect-tools.git'
-                            }
-
-                            licenses {
-                                license {
-                                    name 'Apache License 2.0'
-                                    url 'http://www.apache.org/licenses/LICENSE-2.0.html'
-                                    distribution 'repo'
-                                }
-                            }
-
-                            developers {
-                                developer {
-                                    id = 'andrewstevenson'
-                                    name = 'Andrew Stevenson'
-                                    email = 'andrew@datamountaineer.com'
-                                }
-                            }
+                    developers {
+                        developer {
+                            id = 'andrewstevenson'
+                            name = 'Andrew Stevenson'
+                            email = 'andrew@datamountaineer.com'
+                        }
+                        developer {
+                            id = 'rollulus'
+                            name = 'Roel'
+                            email = 'rollulus@xs4all.nl'
                         }
                     }
                 }
             }
+
         }
     }
+
 }
 
-//nexusStaging {
-//    username = ossrhUser
-//    password = ossrhPassword
-//}
+nexusStaging {
+    packageGroup = project.getGroup()
+    username = ossrhUsername
+    password = ossrhPassword
+}
