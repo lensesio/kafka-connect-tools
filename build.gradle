@@ -1,12 +1,15 @@
 buildscript {
     repositories {
         jcenter()
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
     }
     dependencies {
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
         classpath 'com.github.maiflai:gradle-scalatest:0.9'
         classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.5.3"
-        classpath 'org.hibernate.build.gradle:gradle-maven-publish-auth:2.0.1'
+        classpath 'net.researchgate:gradle-release:2.3.4'
     }
 }
 
@@ -23,18 +26,19 @@ ext {
     scalaTestVersion = "2.2.6"
 }
 
+apply plugin: 'signing'
+apply plugin: 'io.codearte.nexus-staging'
+apply plugin: 'net.researchgate.release'
+
 allprojects {
     apply plugin: 'java'
     apply plugin: 'scala'
     apply plugin: 'maven'
     apply plugin: "com.github.maiflai.scalatest"
     apply plugin: 'com.github.johnrengelman.shadow'
-    apply plugin: 'signing'
-    apply plugin: 'maven-publish-auth'
-    apply plugin: 'io.codearte.nexus-staging'
 
     group = 'com.datamountaineer'
-    version = '0.1'
+    version = version
     description = "kafka-connect-cli"
 
     sourceCompatibility = 1.8
@@ -65,8 +69,8 @@ dependencies {
     testRuntime 'org.pegdown:pegdown:1.1.0'
 }
 
-sourceSets.main.java.srcDirs = []
-sourceSets.test.java.srcDirs = []
+//sourceSets.main.java.srcDirs = []
+//sourceSets.test.java.srcDirs = []
 
 test {
     maxParallelForks = 1
@@ -174,8 +178,8 @@ if (project.hasProperty('release')) {
 
 }
 
-//nexusStaging {
-//    packageGroup = project.getGroup()
-//    username = ossrhUsername
-//    password = ossrhPassword
-//}
+nexusStaging {
+    packageGroup = project.getGroup()
+    username = ossrhUsername
+    password = ossrhPassword
+}
