@@ -1,1 +1,1 @@
-java -cp build/libs/kafka-connect-cli-0.1-all.jar com.datamountaineer.connect.tools.Cli $@
+java -jar build/libs/kafka-connect-cli-0.2-all.jar com.datamountaineer.connect.tools.Cli $@
