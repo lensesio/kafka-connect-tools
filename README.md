@@ -1,6 +1,16 @@
 [![Build Status](https://travis-ci.org/datamountaineer/kafka-connect-tools.svg?branch=master)](https://travis-ci.org/datamountaineer/kafka-connect-tools)
 [<img src="https://img.shields.io/badge/latest%20release-v0.2-blue.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22kafka-connect-cli%22)
 
+Connect tools is Maven
+
+```bash
+<dependency>
+	<groupId>com.datamountaineer</groupId>
+	<artifactId>kafka-connect-cli</artifactId>
+	<version>0.2</version>
+</dependency>
+```
+
 ##Requirements
 
 * Java 1.8
