@@ -20,6 +20,7 @@ project/plugins/project/
 
 *.iml
 *.ipr
+/docs/build
 *.iws
 .idea
 
