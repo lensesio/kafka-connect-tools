@@ -28,7 +28,7 @@ The CLI is meant to behave as a good unix citizen: input from `stdin`; output to
       --help
             prints this usage text
       -e <value> | --endpoint <value>
-            Kafka REST URL, default is http://localhost:8083/
+            Kafka Connect REST URL, default is http://localhost:8083/
 
     Command: ps
     list active connectors names.
@@ -47,6 +47,10 @@ The CLI is meant to behave as a good unix citizen: input from `stdin`; output to
 
       <connector-name>...
             connector name(s)
+
+You can override the default endpoint by setting an environment variable `KAFKA_CONNECT_REST` i.e.
+ 
+    export KAFKA_CONNECT_REST="http://myserver:myport"
 
 To Build
 ========

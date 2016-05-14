@@ -12,12 +12,13 @@ import AppCommand._
 
 /** Container for default program argument values */
 object Defaults {
-  /** Where the REST service lives by default */
-  val BaseUrl = "http://localhost:8083/"
+  /** Initial Kafka Connect REST service from environment variable or default one */
+  val BaseUrl = scala.util.Properties.envOrElse("KAFKA_CONNECT_REST", "http://localhost:8083/")
 }
 
 /**
   * Holds interpreted program arguments
+  *
   * @param cmd the AppCommand to perform
   * @param url the url of the REST service, defaults to Defaults.BaseUrl
   * @param connectorName an optional connector name that is the subject of the command
@@ -28,6 +29,7 @@ case class Arguments(cmd: AppCommand= NONE, url: String = Defaults.BaseUrl, conn
 object ExecuteCommand {
   /**
     * Performs the action contained in the Arguments on RestKafkaConnectApi
+    *
     * @param cfg an Arguments object that contains what to do
     * @return A Try that indicates success or failure
     */
@@ -59,6 +61,7 @@ object ExecuteCommand {
 
   /**
     * Returns an iterator that reads stdin until EOF
+    *
     * @return an Iterator that reads stdin
     */
   def allStdIn = Iterator.
@@ -72,6 +75,7 @@ object ExecuteCommand {
 
   /**
     * Translates .properties key values into a String->String map using a regex. Lines starting with # are ignored.
+    *
     * @param properties the lines containing the properties
     * @return a map with key -> value
     */
@@ -84,6 +88,7 @@ object ExecuteCommand {
 object Cli {
   /**
     * Translates program arguments into an Arguments object
+    *
     * @param args the program arguments
     * @return an Arguments object
     */
@@ -93,7 +98,7 @@ object Cli {
       help("help") text ("prints this usage text")
 
       opt[String]('e', "endpoint") action { (x, c) =>
-        c.copy(url = x) } text(s"Kafka REST URL, default is ${Defaults.BaseUrl}")
+        c.copy(url = x) } text(s"Kafka Connect REST URL, default is ${Defaults.BaseUrl}")
 
       cmd("ps") action { (_, c) => c.copy(cmd = LIST_ACTIVE) } text "list active connectors names." children()
       cmd("get") action { (_, c) => c.copy(cmd = GET) } text "get information about the specified connector." children()
@@ -115,6 +120,7 @@ object Cli {
 
   /**
     * Entry point
+    *
     * @param args program arguments
     */
   def main(args: Array[String]): Unit = {

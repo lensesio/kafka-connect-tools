@@ -30,7 +30,7 @@ data in .properties style: ``key=value`` lines and comments start with a
       --help
             prints this usage text
       -e <value> | --endpoint <value>
-            Kafka REST URL, default is http://localhost:8083/
+            Kafka Connect REST URL, default is http://localhost:8083/
 
     Command: ps
     list active connectors names.
@@ -49,6 +49,10 @@ data in .properties style: ``key=value`` lines and comments start with a
 
       <connector-name>...
             connector name(s)
+
+You can override the default endpoint by setting an environment variable `KAFKA_CONNECT_REST` i.e.
+
+    export KAFKA_CONNECT_REST="http://myserver:myport"
 
 Requirements
 ------------
