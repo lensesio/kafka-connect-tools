@@ -12,7 +12,7 @@ import scala.util.{Success, Try}
 class MainCliUnitTests extends FunSuite with Matchers with MockFactory {
   def split(s:String) = s.split(" ")
 
-  test("Valdid program arguments are parsed correctly") {
+  test("Valid program arguments are parsed correctly") {
     Cli.parseProgramArgs(split("ps")) shouldEqual Some(Arguments(LIST_ACTIVE, Defaults.BaseUrl, None))
     Cli.parseProgramArgs(split("ps -e my_endpoint")) shouldEqual Some(Arguments(LIST_ACTIVE, "my_endpoint", None))
     Cli.parseProgramArgs(split("rm killit -e my_endpoint")) shouldEqual Some(Arguments(DELETE, "my_endpoint", Some("killit")))
@@ -24,7 +24,7 @@ class MainCliUnitTests extends FunSuite with Matchers with MockFactory {
   test("Invaldid program arguments are rejected") {
     Cli.parseProgramArgs(split("fakecmd")) shouldEqual None
     Cli.parseProgramArgs(split("rm")) shouldEqual None
-    Cli.parseProgramArgs(split("create good -j nonense")) shouldEqual None
+    Cli.parseProgramArgs(split("create good -j nonsense")) shouldEqual None
   }
 }
 

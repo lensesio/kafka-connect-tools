@@ -115,7 +115,7 @@ tasks.withType(Tar) {
 }
 
 task compile(dependsOn: 'compileScala')
-task fatJar(dependsOn : ['test', 'shadowJar'])
+task fatJar(dependsOn : ['test', 'shadowJar', 'makeCli'])
 task fatJarNoTest(dependsOn : 'shadowJar')
 
 println "Building ${name}-${version}"
@@ -188,4 +188,11 @@ nexusStaging {
     packageGroup = project.getGroup()
     username = ossrhUsername
     password = ossrhPassword
+}
+
+task makeCli(type: Copy) {
+    from "src/main/resources/cli"
+    into "."
+
+    expand(version: version)
 }
