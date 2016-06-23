@@ -1,5 +1,4 @@
 [![Stories in Ready](https://badge.waffle.io/datamountaineer/kafka-connect-tools.png?label=ready&title=Ready)](https://waffle.io/datamountaineer/kafka-connect-tools)
-[![Stories in Ready](https://badge.waffle.io/datamountaineer/kafka-connect-tools.png?label=ready&title=Ready)](https://waffle.io/datamountaineer/kafka-connect-tools)
 [![Build Status](https://travis-ci.org/datamountaineer/kafka-connect-tools.svg?branch=master)](https://travis-ci.org/datamountaineer/kafka-connect-tools)
 [<img src="https://img.shields.io/badge/latest%20release-v0.2-blue.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22kafka-connect-cli%22)
 
