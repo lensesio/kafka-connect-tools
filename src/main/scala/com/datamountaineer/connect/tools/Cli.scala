@@ -39,15 +39,15 @@ object ExecuteCommand {
     val api = new RestKafkaConnectApi(new java.net.URI(cfg.url))
     val fmt = new PropertiesFormatter()
 
-    lazy val configuration = propsToMap(allStdIn.toSeq)
-    lazy val connector = cfg.connectorName.get
+    lazy val connectorName = cfg.connectorName.get
+    lazy val configuration = coherentConfig(propsToMap(allStdIn.toSeq), connectorName)
 
     val res = cfg.cmd match {
       case LIST_ACTIVE => api.activeConnectorNames.map(fmt.connectorNames).map(Some(_))
-      case GET => api.connectorInfo(connector).map(fmt.connectorInfo).map(Some(_))
-      case DELETE => api.delete(connector).map(_ => None)
-      case CREATE => api.addConnector(connector, configuration).map(fmt.connectorInfo).map(Some(_))
-      case RUN => api.updateConnector(connector, configuration).map(fmt.connectorInfo).map(Some(_))
+      case GET => api.connectorInfo(connectorName).map(fmt.connectorInfo).map(Some(_))
+      case DELETE => api.delete(connectorName).map(_ => None)
+      case CREATE => api.addConnector(connectorName, configuration).map(fmt.connectorInfo).map(Some(_))
+      case RUN => api.updateConnector(connectorName, configuration).map(fmt.connectorInfo).map(Some(_))
     }
     res.recover{
       case ApiErrorException(e) => Some(e)
@@ -60,12 +60,27 @@ object ExecuteCommand {
   }
 
   /**
+    * When the configuration contains "name=xxx" where xxx != connectorName, the connect herders go nuts.
+    * Although the CLI is just a messenger, in this case it will alter the message for the good cause.
+    *
+    * @param configuration properties as map
+    * @param connectorName name of the connector
+    */
+  def coherentConfig(configuration: Map[String,String], connectorName: String): Map[String,String] = {
+    configuration.get("name") match {
+      case Some(name) if name != connectorName => System.err.println(s"warning: changed `name=${name}` into `name=${connectorName}`")
+        configuration.updated("name", connectorName)
+      case _ => configuration
+    }
+  }
+
+  /**
     * Returns an iterator that reads stdin until EOF
     *
     * @return an Iterator that reads stdin
     */
   def allStdIn = Iterator.
-    continually(io.StdIn.readLine).
+    continually(scala.io.StdIn.readLine).
     takeWhile(x => {
       x != null
     })
