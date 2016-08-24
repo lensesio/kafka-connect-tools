@@ -19,7 +19,7 @@ Connect tools is Maven
 Kafka Connect CLI
 =================
 
-This is a tiny command line interface (CLI) around the [Kafka Connect REST Interface](http://docs.confluent.io/2.0.1/connect/userguide.html#rest-interface) to manage connectors. It is used in a git like fashion where the first program argument indicates the command: it can be one of `[ps|get|rm|create|run]`.
+This is a tiny command line interface (CLI) around the [Kafka Connect REST Interface](http://docs.confluent.io/2.0.1/connect/userguide.html#rest-interface) to manage connectors. It is used in a git like fashion where the first program argument indicates the command: it can be one of `[ps|get|rm|create|run|status]`.
 
 The CLI is meant to behave as a good unix citizen: input from `stdin`; output to `stdout`; out of band info to `stderr` and non-zero exit status on error. Commands dealing with configuration expect or produce data in .properties style: `key=value` lines and comments start with a `#`.
 
@@ -143,10 +143,10 @@ Example:
     track.terms=test
     #task ids: 0
 
-Query Connector State
----------------------
+Query Connector Status
+----------------------
 
-Shows a connector's state and the state of its tasks.
+Shows a connector's status and the state of its tasks.
 
 Command: `status`
 
@@ -154,7 +154,7 @@ Example:
 
     ./cli status my-toy-connector
     connectorState: RUNNING
-    numberOfTasks: 2
+    numberOfTasks: 3
     tasks:
       - taskId: 0
         taskState: RUNNING
