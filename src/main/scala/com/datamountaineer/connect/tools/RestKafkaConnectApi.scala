@@ -15,12 +15,19 @@ case class ConnectorInfo(name: String, config: Map[String,String], tasks: List[T
 /** A TasklessConnectorInfo as e.g. http://docs.confluent.io/2.1.0-alpha1/connect/userguide.html#post--connectors */
 case class TasklessConnectorInfo(name: String, config: Map[String,String])
 
+case class ConnectorStatus(state:String,worker_id:String, trace:Option[String])
+case class TaskStatus(id:Int, state:String,worker_id:String,trace:Option[String])
+case class ConnectorTaskStatus(name:String, connector: ConnectorStatus,  tasks: List[TaskStatus])
+
 /** Implicits for JSON (de)serialization */
 object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val task = jsonFormat2(Task)
   implicit val connectorinfo = jsonFormat3(ConnectorInfo)
   implicit val tasklessconnectorinfo = jsonFormat2(TasklessConnectorInfo)
   implicit val errormsg = jsonFormat2(ErrorMessage)
+  implicit val connectorstatus = jsonFormat3(ConnectorStatus)
+  implicit val taskstatus = jsonFormat4(TaskStatus)
+  implicit val connectortaskstatus = jsonFormat3(ConnectorTaskStatus)
 }
 
 /** Allows one to do HTTP requests */
@@ -102,6 +109,8 @@ trait KafkaConnectApi {
     * @return A Try
     */
   def delete(name: String): Try[Unit]
+
+  def connectorStatus(name:String):Try[ConnectorTaskStatus]
 }
 
 /** Kafka Connect Api interface */
@@ -193,4 +202,10 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
   def delete(name: String) : Try[Unit] = {
     Try(req[Unit](s"/connectors/${name}","DELETE"))
   }
+
+  def connectorStatus(name:String):Try[ConnectorTaskStatus] = {
+    import MyJsonProtocol._
+    Try(req[ConnectorTaskStatus](s"/connectors/${name}/status").get)
+  }
+
 }

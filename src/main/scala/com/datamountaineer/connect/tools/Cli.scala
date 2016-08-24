@@ -6,7 +6,7 @@ import scopt._
 /** Enumeration of CLI commands */
 object AppCommand extends Enumeration {
   type AppCommand = Value
-  val NONE, LIST_ACTIVE, GET, DELETE, CREATE, RUN  = Value
+  val NONE, LIST_ACTIVE, GET, DELETE, CREATE, RUN, STATUS = Value
 }
 import AppCommand._
 
@@ -48,6 +48,7 @@ object ExecuteCommand {
       case DELETE => api.delete(connectorName).map(_ => None)
       case CREATE => api.addConnector(connectorName, configuration).map(fmt.connectorInfo).map(Some(_))
       case RUN => api.updateConnector(connectorName, configuration).map(fmt.connectorInfo).map(Some(_))
+      case STATUS => api.connectorStatus(connectorName).map(fmt.connectorStatus).map(Some(_))
     }
     res.recover{
       case ApiErrorException(e) => Some(e)
@@ -108,8 +109,8 @@ object Cli {
     * @return an Arguments object
     */
   def parseProgramArgs(args: Array[String]) = {
-    new OptionParser[Arguments]("kafconcli") {
-      head("kafconcli", "1.0")
+    new OptionParser[Arguments]("kafka-connect-cli") {
+      head("kafka-connect-cli", "0.4")
       help("help") text ("prints this usage text")
 
       opt[String]('e', "endpoint") action { (x, c) =>
@@ -120,6 +121,7 @@ object Cli {
       cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "remove the specified connector." children()
       cmd("create") action { (_, c) => c.copy(cmd = CREATE) } text "create the specified connector with the .properties from stdin; the connector cannot already exist." children()
       cmd("run") action { (_, c) => c.copy(cmd = RUN) } text "create or update the specified connector with the .properties from stdin." children()
+      cmd("status") action { (_, c) => c.copy(cmd = STATUS) } text "get connector and task status" children()
 
       arg[String]("<connector-name>") optional() action { (x, c) =>
         c.copy(connectorName = Some(x))
