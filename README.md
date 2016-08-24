@@ -23,8 +23,8 @@ This is a tiny command line interface (CLI) around the [Kafka Connect REST Inter
 
 The CLI is meant to behave as a good unix citizen: input from `stdin`; output to `stdout`; out of band info to `stderr` and non-zero exit status on error. Commands dealing with configuration expect or produce data in .properties style: `key=value` lines and comments start with a `#`.
 
-    kafconcli 1.0
-    Usage: kafconcli [ps|get|rm|create|run] [options] [<connector-name>...]
+    kafka-connect-cli 0.4
+    Usage: kafka-connect-cli [ps|get|rm|create|run|status] [options] [<connector-name>]
 
       --help
             prints this usage text
@@ -35,10 +35,10 @@ The CLI is meant to behave as a good unix citizen: input from `stdin`; output to
     list active connectors names.
 
     Command: get
-    get information about the specified connector(s).
+    get the configuration of the specified connector.
 
     Command: rm
-    remove the specified connector(s).
+    remove the specified connector.
 
     Command: create
     create the specified connector with the .properties from stdin; the connector cannot already exist.
@@ -46,11 +46,14 @@ The CLI is meant to behave as a good unix citizen: input from `stdin`; output to
     Command: run
     create or update the specified connector with the .properties from stdin.
 
-      <connector-name>...
-            connector name(s)
+    Command: status
+    get connector and it's task(s) state(s).
+
+      <connector-name>
+            connector name
 
 You can override the default endpoint by setting an environment variable `KAFKA_CONNECT_REST` i.e.
- 
+
     export KAFKA_CONNECT_REST="http://myserver:myport"
 
 To Build
@@ -76,8 +79,8 @@ Example:
     $ ./cli ps
     twitter-source
 
-Get Connector Information
--------------------------
+Get Connector Configuration
+---------------------------
 
 Command: `get`
 
@@ -140,9 +143,33 @@ Example:
     track.terms=test
     #task ids: 0
 
+Query Connector State
+---------------------
+
+Shows a connector's state and the state of its tasks.
+
+Command: `status`
+
+Example:
+
+    ./cli status my-toy-connector
+    connectorState: RUNNING
+    numberOfTasks: 2
+    tasks:
+      - taskId: 0
+        taskState: RUNNING
+      - taskId: 1
+        taskState: FAILED
+        trace: java.lang.Exception: broken on purpose
+        at java.lang.Thread.run(Thread.java:745)
+      - taskId: 2
+        taskState: FAILED
+        trace: java.lang.Exception: broken on purpose
+        at java.lang.Thread.run(Thread.java:745)
+
 Misc
 ====
 
-Contributions are encouraged, feedback to [rollulus](https://keybase.io/rollulus) at xs4all dot nl, recommendations for more idiomatic Scala are welcome.
+Contributions are encouraged, feedback to [rollulus](https://keybase.io/rollulus) at xs4all dot nl.
 
 Thanks, enjoy!
