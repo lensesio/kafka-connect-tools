@@ -116,12 +116,12 @@ object Cli {
       opt[String]('e', "endpoint") action { (x, c) =>
         c.copy(url = x) } text(s"Kafka Connect REST URL, default is ${Defaults.BaseUrl}")
 
-      cmd("ps") action { (_, c) => c.copy(cmd = LIST_ACTIVE) } text "list active connectors names." children()
-      cmd("get") action { (_, c) => c.copy(cmd = GET) } text "get information about the specified connector." children()
-      cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "remove the specified connector." children()
-      cmd("create") action { (_, c) => c.copy(cmd = CREATE) } text "create the specified connector with the .properties from stdin; the connector cannot already exist." children()
-      cmd("run") action { (_, c) => c.copy(cmd = RUN) } text "create or update the specified connector with the .properties from stdin." children()
-      cmd("status") action { (_, c) => c.copy(cmd = STATUS) } text "get connector and task status" children()
+      cmd("ps") action { (_, c) => c.copy(cmd = LIST_ACTIVE) } text "list active connectors names.\n" children()
+      cmd("get") action { (_, c) => c.copy(cmd = GET) } text "get the configuration of the specified connector.\n" children()
+      cmd("rm") action { (_, c) => c.copy(cmd = DELETE) } text "remove the specified connector.\n" children()
+      cmd("create") action { (_, c) => c.copy(cmd = CREATE) } text "create the specified connector with the .properties from stdin; the connector cannot already exist.\n" children()
+      cmd("run") action { (_, c) => c.copy(cmd = RUN) } text "create or update the specified connector with the .properties from stdin.\n" children()
+      cmd("status") action { (_, c) => c.copy(cmd = STATUS) } text "get connector and it's task(s) state(s).\n" children()
 
       arg[String]("<connector-name>") optional() action { (x, c) =>
         c.copy(connectorName = Some(x))
