@@ -68,10 +68,12 @@ class PropertiesFormatter extends Formatter {
 
   def taskStatus(t:TaskStatus) =
     s"  - taskId: ${t.id}\n" +
-    s"    taskState: ${t.state}\n" + trace(t.trace,"    ")
+    s"    taskState: ${t.state}\n" + trace(t.trace,"    ") +
+    s"    workerId: ${t.worker_id}\n"
 
   override def connectorStatus(s:ConnectorTaskStatus): String =
     s"connectorState: ${s.connector.state}\n"+
+    s"workerId: ${s.connector.worker_id}\n" +
       trace(s.connector.trace) +
       s"numberOfTasks: ${s.tasks.length}\n"+
     s"tasks:\n"+
