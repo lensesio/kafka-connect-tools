@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/datamountaineer/kafka-connect-tools.svg?branch=master)](https://travis-ci.org/datamountaineer/kafka-connect-tools)
-[<img src="https://img.shields.io/badge/latest%20release-v0.5-blue.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22kafka-connect-cli%22)
+[<img src="https://img.shields.io/badge/latest%20release-v0.6-blue.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22kafka-connect-cli%22)
 
 Connect tools is Maven
 
@@ -18,11 +18,11 @@ Connect tools is Maven
 Kafka Connect CLI
 =================
 
-This is a tiny command line interface (CLI) around the [Kafka Connect REST Interface](http://docs.confluent.io/2.0.1/connect/userguide.html#rest-interface) to manage connectors. It is used in a git like fashion where the first program argument indicates the command: it can be one of `[ps|get|rm|create|run|status]`.
+This is a tiny command line interface (CLI) around the [Kafka Connect REST Interface](http://docs.confluent.io/3.0.1/connect/userguide.html#rest-interface) to manage connectors. It is used in a git like fashion where the first program argument indicates the command: it can be one of `[ps|get|rm|create|run|status]`.
 
 The CLI is meant to behave as a good unix citizen: input from `stdin`; output to `stdout`; out of band info to `stderr` and non-zero exit status on error. Commands dealing with configuration expect or produce data in .properties style: `key=value` lines and comments start with a `#`.
 
-    kafka-connect-cli 0.5
+    kafka-connect-cli 0.6
     Usage: kafka-connect-cli [ps|get|rm|create|run|status] [options] [<connector-name>]
 
       --help
