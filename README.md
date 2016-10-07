@@ -7,7 +7,7 @@ Connect tools is Maven
 <dependency>
 	<groupId>com.datamountaineer</groupId>
 	<artifactId>kafka-connect-cli</artifactId>
-	<version>0.5</version>
+	<version>0.6</version>
 </dependency>
 ```
 
