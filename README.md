@@ -14,6 +14,7 @@ Connect tools is Maven
 ##Requirements
 
 * Java 1.8
+* Gradle 3
 
 Kafka Connect CLI
 =================
