@@ -1,34 +1,11 @@
 package com.datamountaineer.connect.tools
 
-import scalaj.http.{Http, BaseHttp, HttpResponse}
+import scalaj.http.Http
 import spray.json._
-import DefaultJsonProtocol._
 import scala.util.{Try, Success, Failure}
-import spray.http._
+import DefaultJsonProtocol._
+import MyJsonProtocol._
 
-/** Equivalent of http://docs.confluent.io/2.1.0-alpha1/connect/userguide.html#statuses-errors */
-case class ErrorMessage(error_code: Int, message: String)
-/** A Task structure as embedded in e.g. http://docs.confluent.io/2.1.0-alpha1/connect/userguide.html#post--connectors */
-case class Task(connector: String, task: Int)
-/** A ConnectorInfo as e.g. http://docs.confluent.io/2.1.0-alpha1/connect/userguide.html#post--connectors */
-case class ConnectorInfo(name: String, config: Map[String,String], tasks: List[Task])
-/** A TasklessConnectorInfo as e.g. http://docs.confluent.io/2.1.0-alpha1/connect/userguide.html#post--connectors */
-case class TasklessConnectorInfo(name: String, config: Map[String,String])
-
-case class ConnectorStatus(state:String,worker_id:String, trace:Option[String])
-case class TaskStatus(id:Int, state:String,worker_id:String,trace:Option[String])
-case class ConnectorTaskStatus(name:String, connector: ConnectorStatus,  tasks: List[TaskStatus])
-
-/** Implicits for JSON (de)serialization */
-object MyJsonProtocol extends DefaultJsonProtocol {
-  implicit val task = jsonFormat2(Task)
-  implicit val connectorinfo = jsonFormat3(ConnectorInfo)
-  implicit val tasklessconnectorinfo = jsonFormat2(TasklessConnectorInfo)
-  implicit val errormsg = jsonFormat2(ErrorMessage)
-  implicit val connectorstatus = jsonFormat3(ConnectorStatus)
-  implicit val taskstatus = jsonFormat4(TaskStatus)
-  implicit val connectortaskstatus = jsonFormat3(ConnectorTaskStatus)
-}
 
 /** Allows one to do HTTP requests */
 trait HttpClient {
@@ -111,6 +88,13 @@ trait KafkaConnectApi {
   def delete(name: String): Try[Unit]
 
   def connectorStatus(name:String):Try[ConnectorTaskStatus]
+  def connectorPluginsDescribe(name: String) : Try[ConnectorPluginsValidate]
+  def connectorPluginsValidate(name: String, config: Map[String, String]) : Try[ConnectorPluginsValidate]
+  def connectorPlugins() : Try[List[ConnectorPlugins]]
+
+  def connectorPause(name: String) : Try[ConnectorTaskStatus]
+  def connectorRestart(name: String) : Try[ConnectorTaskStatus]
+  def connectorResume(name: String) : Try[ConnectorTaskStatus]
 }
 
 /** Kafka Connect Api interface */
@@ -124,13 +108,12 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     * @return An Exception
     */
   private def non2xxException(status: Int, respBody: Option[String]): Exception = {
-    import MyJsonProtocol.errormsg
     // try to deserialize message from body
     try {
       val msg = respBody.get.parseJson.convertTo[ErrorMessage]
-      new ApiErrorException(s"Error: the Kafka Connect API returned: ${msg.message} (${msg.error_code})")
+      new ApiErrorException(s"${Console.RED} Error: the Kafka Connect API returned: ${msg.message} (${msg.error_code}) ${Console.RESET}")
     } catch {
-      case _: Throwable => new Exception(s"Error: the Kafka Connect API returned status code ${status}")
+      case _: Throwable => new Exception(s"${Console.RED} Error: the Kafka Connect API returned status code ${status} ${Console.RESET}")
     }
   }
 
@@ -157,6 +140,7 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     * @return A Seq with currently active connectors names as string
     */
   def activeConnectorNames(): Try[Seq[String]] = {
+    import MyJsonProtocol._
     Try(req[List[String]]("/connectors").get)
   }
 
@@ -166,7 +150,7 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     * @return A ConnectorInfo Try
     */
   def connectorInfo(name: String): Try[ConnectorInfo] = {
-    import MyJsonProtocol.connectorinfo
+    import MyJsonProtocol._
     Try(req[ConnectorInfo](s"/connectors/${name}").get)
   }
 
@@ -177,7 +161,6 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     * @return a ConnectorInfo Try
     */
   def addConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo] = {
-    import MyJsonProtocol._
     Try(req[ConnectorInfo](s"/connectors", "POST",
       TasklessConnectorInfo(name, config).toJson.toString).get)
   }
@@ -200,7 +183,56 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     * @return A Try
     */
   def delete(name: String) : Try[Unit] = {
+    import MyJsonProtocol._
     Try(req[Unit](s"/connectors/${name}","DELETE"))
+  }
+
+  override def connectorRestart(name: String): Try[ConnectorTaskStatus] = {
+    import MyJsonProtocol._
+    Try(req[Unit](s"/connectors/${name}/restart", "POST"))
+    println("Waiting for restart")
+    Thread.sleep(3000)
+    Try(req[ConnectorTaskStatus](s"/connectors/${name}/status").get)
+  }
+
+  override def connectorPause(name: String): Try[ConnectorTaskStatus] = {
+    import MyJsonProtocol._
+    Try(req[Unit](s"/connectors/${name}/pause", "POST"))
+    println("Waiting for pause")
+    Thread.sleep(3000)
+    Try(req[ConnectorTaskStatus](s"/connectors/${name}/status").get)
+  }
+
+  override def connectorResume(name: String): Try[ConnectorTaskStatus] = {
+    import MyJsonProtocol._
+    Try(req[Unit](s"/connectors/${name}/resume", "POST"))
+    println("Waiting for resume")
+    Thread.sleep(3000)
+    Try(req[ConnectorTaskStatus](s"/connectors/${name}/status").get)
+  }
+
+  /**
+    * Get the Connector Classes loaded on the Classpath
+    * @return A ConnectorPlugins
+    * */
+  def connectorPlugins() : Try[List[ConnectorPlugins]] = {
+    import MyJsonProtocol._
+    Try(req[List[ConnectorPlugins]](s"/connector-plugins").get)
+  }
+
+  /**
+    * Get the Connector Classes loaded on the Classpath
+    * @return A PluginProps
+    * */
+  def connectorPluginsDescribe(name: String) : Try[ConnectorPluginsValidate] = {
+    import MyJsonProtocol._
+    Try(req[ConnectorPluginsValidate](s"/connector-plugins/${name}/config/validate", "PUT", "{}").get)
+  }
+
+
+  def connectorPluginsValidate(name: String, config: Map[String, String]): Try[ConnectorPluginsValidate] = {
+    import MyJsonProtocol._
+    Try(req[ConnectorPluginsValidate](s"/connector-plugins/${name}/config/validate", "PUT", config.toJson.toString).get)
   }
 
   def connectorStatus(name:String):Try[ConnectorTaskStatus] = {

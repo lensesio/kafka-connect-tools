@@ -19,9 +19,16 @@ class MainCliUnitTests extends FunSuite with Matchers with MockFactory {
     Cli.parseProgramArgs(split("get getit")) shouldEqual Some(Arguments(GET, Defaults.BaseUrl, Some("getit")))
     Cli.parseProgramArgs(split("create createit")) shouldEqual Some(Arguments(CREATE, Defaults.BaseUrl, Some("createit")))
     Cli.parseProgramArgs(split("run runit")) shouldEqual Some(Arguments(RUN, Defaults.BaseUrl, Some("runit")))
+    Cli.parseProgramArgs(split("plugins")) shouldEqual Some(Arguments(PLUGINS, Defaults.BaseUrl, None))
+    Cli.parseProgramArgs(split("describe myconn")) shouldEqual Some(Arguments(DESCRIBE, Defaults.BaseUrl, Some("myconn")))
+    Cli.parseProgramArgs(split("validate myconn")) shouldEqual Some(Arguments(VALIDATE, Defaults.BaseUrl, Some("myconn")))
+
+    Cli.parseProgramArgs(split("restart myconn")) shouldEqual Some(Arguments(RESTART, Defaults.BaseUrl, Some("myconn")))
+    Cli.parseProgramArgs(split("pause myconn")) shouldEqual Some(Arguments(PAUSE, Defaults.BaseUrl, Some("myconn")))
+    Cli.parseProgramArgs(split("resume myconn")) shouldEqual Some(Arguments(RESUME, Defaults.BaseUrl, Some("myconn")))
   }
 
-  test("Invaldid program arguments are rejected") {
+  test("Invalid program arguments are rejected") {
     Cli.parseProgramArgs(split("fakecmd")) shouldEqual None
     Cli.parseProgramArgs(split("rm")) shouldEqual None
     Cli.parseProgramArgs(split("create good -j nonsense")) shouldEqual None
@@ -84,4 +91,82 @@ class ApiUnitTests extends FunSuite with Matchers with MockFactory {
       verifyingHttpClient("/connectors/nome", "DELETE", 200, None)
     ).delete("nome") shouldEqual Success()
   }
+
+  test("plugins") {
+    val ret = new RestKafkaConnectApi(URL, verifyingHttpClient("/connector-plugins", "GET", 200, Some("""[{"class": "andrew"}]"""))
+    ).connectorPlugins()
+
+    ret shouldEqual Success(List(ConnectorPlugins("andrew")))
+  }
+
+  test("validate") {
+
+    val config = """
+      |{
+      |    "name": "FileStreamSinkConnector",
+      |    "error_count": 1,
+      |    "groups": [
+      |        "Common"
+      |    ],
+      |    "configs": [
+      |         {
+      |            "definition": {
+      |                "name": "topics",
+      |                "type": "LIST",
+      |                "required": false,
+      |                "default_value": "",
+      |                "importance": "HIGH",
+      |                "documentation": "",
+      |                "group": "Common",
+      |                "width": "LONG",
+      |                "display_name": "Topics",
+      |                "dependents": [],
+      |                "order": 4
+      |             },
+      |            "value": {
+      |                "name": "topics",
+      |                "value": "test-topic",
+      |                "recommended_values": [],
+      |                "errors": [],
+      |                "visible": true
+      |            }
+      |        }
+      |   ]
+      |}
+    """.stripMargin
+
+    import MyJsonProtocol._
+    val jsonAst = config.parseJson
+    val valid = jsonAst.convertTo[ConnectorPluginsValidate]
+
+    val ret = new RestKafkaConnectApi(URL, verifyingHttpClient("/connector-plugins/myconn/config/validate", "PUT", 200, Some(config))
+    ).connectorPluginsDescribe("myconn")
+
+    ret.get.name shouldEqual valid.name
+    ret.get.error_count shouldEqual valid.error_count
+    ret.get.configs.head.definition.name shouldEqual valid.configs.head.definition.name
+  }
+
+  test("regex") {
+    /** Regex that is used in propsToMap */
+    lazy val keyValueRegex = "^([^#][^=]*)=(.*)$".r
+
+    /**
+      * Translates .properties key values into a String->String map using a regex. Lines starting with # are ignored.
+      *
+      * @param properties the lines containing the properties
+      * @return a map with key -> value
+      */
+    def propsToMap(properties: Seq[String]): Map[String, String] = properties.flatMap(_ match {
+      case keyValueRegex(k, v) => Some((k.trim, v.trim))
+      case _ => None
+    }).toMap
+
+
+    val p = Seq("test=b=andrew")
+    val m = propsToMap(p)
+    m.head._1 shouldEqual "test"
+    m.head._2 shouldEqual "b=andrew"
+  }
+
 }

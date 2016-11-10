@@ -6,7 +6,7 @@ import scopt._
 /** Enumeration of CLI commands */
 object AppCommand extends Enumeration {
   type AppCommand = Value
-  val NONE, LIST_ACTIVE, GET, DELETE, CREATE, RUN, STATUS = Value
+  val NONE, LIST_ACTIVE, GET, DELETE, CREATE, RUN, STATUS, PLUGINS, DESCRIBE, RESTART, PAUSE, RESUME, VALIDATE = Value
 }
 import AppCommand._
 
@@ -35,20 +35,28 @@ object ExecuteCommand {
     */
   def apply(cfg: Arguments) = {
     if (cfg.connectorName.isEmpty)
-      require(cfg.cmd == LIST_ACTIVE)
+      require(cfg.cmd == LIST_ACTIVE || cfg.cmd == PLUGINS)
     val api = new RestKafkaConnectApi(new java.net.URI(cfg.url))
     val fmt = new PropertiesFormatter()
-
+    val cmd = cfg.cmd
     lazy val connectorName = cfg.connectorName.get
-    lazy val configuration = coherentConfig(propsToMap(allStdIn.toSeq), connectorName)
 
-    val res = cfg.cmd match {
+    lazy val configuration =  coherentConfig(propsToMap(allStdIn.toSeq), connectorName, cmd)
+
+
+    val res = cmd match {
       case LIST_ACTIVE => api.activeConnectorNames.map(fmt.connectorNames).map(Some(_))
       case GET => api.connectorInfo(connectorName).map(fmt.connectorInfo).map(Some(_))
       case DELETE => api.delete(connectorName).map(_ => None)
       case CREATE => api.addConnector(connectorName, configuration).map(fmt.connectorInfo).map(Some(_))
       case RUN => api.updateConnector(connectorName, configuration).map(fmt.connectorInfo).map(Some(_))
       case STATUS => api.connectorStatus(connectorName).map(fmt.connectorStatus).map(Some(_))
+      case PLUGINS => api.connectorPlugins.map(fmt.connectorPlugins).map(Some(_))
+      case DESCRIBE => api.connectorPluginsDescribe(connectorName).map(fmt.connectorPluginsValidate(_)).map(Some(_))
+      case VALIDATE => api.connectorPluginsValidate(connectorName, configuration).map(fmt.connectorPluginsValidate(_, true, configuration)).map(Some(_))
+      case PAUSE => api.connectorPause(connectorName).map(fmt.connectorStatus).map(Some(_))
+      case RESTART => api.connectorRestart(connectorName).map(fmt.connectorStatus).map(Some(_))
+      case RESUME => api.connectorResume(connectorName).map(fmt.connectorStatus).map(Some(_))
     }
     res.recover{
       case ApiErrorException(e) => Some(e)
@@ -67,10 +75,13 @@ object ExecuteCommand {
     * @param configuration properties as map
     * @param connectorName name of the connector
     */
-  def coherentConfig(configuration: Map[String,String], connectorName: String): Map[String,String] = {
+  def coherentConfig(configuration: Map[String,String], connectorName: String, cmd: AppCommand): Map[String,String] = {
     configuration.get("name") match {
-      case Some(name) if name != connectorName => System.err.println(s"warning: changed `name=${name}` into `name=${connectorName}`")
+      case Some(name) if (name != connectorName) && (!cmd.equals(VALIDATE)) => {
+        System.err.println(Console.YELLOW + s"warning: changed `name=${name}` into `name=${connectorName}`")
+
         configuration.updated("name", connectorName)
+      }
       case _ => configuration
     }
   }
@@ -87,7 +98,7 @@ object ExecuteCommand {
     })
 
   /** Regex that is used in propsToMap */
-  lazy val keyValueRegex = "([^#].*)=(.*)".r
+  lazy val keyValueRegex = "^([^#][^=]*)=(.*)$".r
 
   /**
     * Translates .properties key values into a String->String map using a regex. Lines starting with # are ignored.
@@ -99,6 +110,7 @@ object ExecuteCommand {
     case keyValueRegex(k, v) => Some((k.trim, v.trim))
     case _ => None
   }).toMap
+
 }
 
 object Cli {
@@ -110,7 +122,7 @@ object Cli {
     */
   def parseProgramArgs(args: Array[String]) = {
     new OptionParser[Arguments]("kafka-connect-cli") {
-      head("kafka-connect-cli", "0.4")
+      head("kafka-connect-cli", "0.7")
       help("help") text ("prints this usage text")
 
       opt[String]('e', "endpoint") action { (x, c) =>
@@ -122,6 +134,12 @@ object Cli {
       cmd("create") action { (_, c) => c.copy(cmd = CREATE) } text "create the specified connector with the .properties from stdin; the connector cannot already exist.\n" children()
       cmd("run") action { (_, c) => c.copy(cmd = RUN) } text "create or update the specified connector with the .properties from stdin.\n" children()
       cmd("status") action { (_, c) => c.copy(cmd = STATUS) } text "get connector and it's task(s) state(s).\n" children()
+      cmd("plugins") action { (_,c) => c.copy(cmd = PLUGINS) } text "list the available connector class plugins on the classpath.\n" children()
+      cmd("describe") action { (_,c) => c.copy(cmd = DESCRIBE) } text "list the configurations for a connector class plugin on the classpath.\n" children()
+      cmd("pause") action { (_,c) => c.copy(cmd = PAUSE) } text "pause the specified connector.\n" children()
+      cmd("restart") action { (_,c) => c.copy(cmd = RESTART) } text "restart the specified connector.\n" children()
+      cmd("resume") action { (_,c) => c.copy(cmd = RESUME) } text "resume the specified connector.\n" children()
+      cmd("validate") action { (_,c) => c.copy(cmd = VALIDATE) } text "validate the connector properties from stdin against a connector class plugin on the classpath.\n" children()
 
       arg[String]("<connector-name>") optional() action { (x, c) =>
         c.copy(connectorName = Some(x))
@@ -129,7 +147,7 @@ object Cli {
 
       checkConfig { c =>
         if (c.cmd == NONE) failure("Command expected.")
-        else if (c.cmd != LIST_ACTIVE && c.connectorName.isEmpty) failure("Please specify the connector-name")
+        else if ((c.cmd != LIST_ACTIVE  && c.cmd != PLUGINS && c.cmd != DESCRIBE) && c.connectorName.isEmpty) failure("Please specify the connector-name")
         else success
       }
     }.parse(args, Arguments())

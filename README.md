@@ -7,7 +7,7 @@ Connect tools is Maven
 <dependency>
 	<groupId>com.datamountaineer</groupId>
 	<artifactId>kafka-connect-cli</artifactId>
-	<version>0.6</version>
+	<version>0.7</version>
 </dependency>
 ```
 
@@ -23,8 +23,8 @@ This is a tiny command line interface (CLI) around the [Kafka Connect REST Inter
 
 The CLI is meant to behave as a good unix citizen: input from `stdin`; output to `stdout`; out of band info to `stderr` and non-zero exit status on error. Commands dealing with configuration expect or produce data in .properties style: `key=value` lines and comments start with a `#`.
 
-    kafka-connect-cli 0.6
-    Usage: kafka-connect-cli [ps|get|rm|create|run|status] [options] [<connector-name>]
+    kafka-connect-cli 0.7
+    Usage: kafka-connect-cli [ps|get|rm|create|run|status|plugins|describe|validate|restart|pause|resume] [options] [<connector-name>]
 
       --help
             prints this usage text
@@ -51,7 +51,27 @@ The CLI is meant to behave as a good unix citizen: input from `stdin`; output to
 
       <connector-name>
             connector name
-
+    
+    Command: plugins
+    list the available connector class plugins on the classpath.
+    
+    Command: describe
+    list the configurations for a connector class plugin on the classpath.
+            
+    Command: validate
+    validate the connector properties from stdin against a connector class plugin on the classpath.
+        <class-name (FQDN)>
+    
+    Command: restart
+     restart the specified connector.
+        
+    Command: pause
+    pause the specified connector.
+    
+    Command: resume
+    resume the specified connector.    
+            
+            
 You can override the default endpoint by setting an environment variable `KAFKA_CONNECT_REST` i.e.
 
     export KAFKA_CONNECT_REST="http://myserver:myport"
@@ -166,6 +186,159 @@ Example:
         taskState: FAILED
         trace: java.lang.Exception: broken on purpose
         at java.lang.Thread.run(Thread.java:745)
+        
+Check which Plugins are on the Classpath and available in the Connect Cluster
+-----------------------------------------------------------------------------
+        
+ Shows which Connector classes are available on the classpath.
+        
+Command: `plugins`
+        
+Example:  
+        
+        ./cli plugins
+        Class name: com.datamountaineeer.streamreactor.connect.blockchain.source.BlockchainSourceConnector
+        Class name: com.datamountaineer.streamreactor.connect.elastic.ElasticSinkConnector
+        Class name: com.datamountaineer.streamreactor.connect.druid.DruidSinkConnector
+        Class name: io.confluent.connect.hdfs.HdfsSinkConnector
+        Class name: io.confluent.connect.jdbc.JdbcSourceConnector
+        Class name: com.datamountaineer.streamreactor.connect.hbase.HbaseSinkConnector
+        Class name: org.apache.kafka.connect.file.FileStreamSourceConnector
+        Class name: com.datamountaineer.streamreactor.connect.hazelcast.sink.HazelCastSinkConnector
+        Class name: com.datamountaineer.streamreactor.connect.cassandra.sink.CassandraSinkConnector
+        Class name: com.datamountaineer.streamreactor.connect.rethink.source.ReThinkSourceConnector
+        Class name: com.datamountaineer.streamreactor.connect.jms.sink.JMSSinkConnector
+        Class name: com.datamountaineer.streamreactor.connect.influx.InfluxSinkConnector
+        Class name: com.datamountaineer.streamreactor.connect.redis.sink.RedisSinkConnector
+        Class name: com.datamountaineer.streamreactor.connect.bloomberg.BloombergSourceConnector
+        Class name: com.datamountaineer.streamreactor.connect.yahoo.source.YahooSourceConnector
+        Class name: com.datamountaineer.streamreactor.connect.kudu.sink.KuduSinkConnector
+        Class name: org.apache.kafka.connect.file.FileStreamSinkConnector
+        Class name: com.datamountaineer.streamreactor.connect.cassandra.source.CassandraSourceConnector
+        Class name: com.datamountaineer.streamreactor.connect.voltdb.VoltSinkConnector
+        Class name: com.datamountaineer.streamreactor.connect.mongodb.sink.MongoSinkConnector
+        Class name: com.datamountaineer.streamreactor.connect.rethink.sink.ReThinkSinkConnector
+        Class name: io.confluent.connect.hdfs.tools.SchemaSourceConnector
+        
+Describe the configuration of a Connector
+-----------------------------------------
+
+Describes the configuration parameters for a Connector.
+
+Command: `describe`
+
+Example:
+
+    ./cli describe com.datamountaineer.streamreactor.connect.rethink.sink.ReThinkSinkConnector
+    {
+      "name": "com.datamountaineer.streamreactor.connect.rethink.sink.ReThinkSinkConnector",
+      "error_count": 3,
+      "groups": ["Common", "Connection"],
+      "configs": [{
+        "definition": {
+          "name": "connector.class",
+          "display_name": "Connector class",
+          "importance": "HIGH",
+          "order": 2,
+          "default_value": "",
+          "dependents": [],
+          "type": "STRING",
+          "required": true,
+          "group": "Common"
+        },
+        "value": {
+          "name": "connector.class",
+          "recommended_values": [],
+          "errors": ["Missing required configuration \"connector.class\" which has no default value."],
+          "visible": true
+        }
+      }, {
+    ...........
+    
+ Validate a Connectors properties file against the required Configurations
+ -------------------------------------------------------------------------
+      
+ Given a properties file for an instance of a Connector validate it against the Connector configuration.
+      
+ Command: `validate`
+      
+ Example: 
+      
+      ./cli validate com.datamountaineer.streamreactor.connect.rethink.sink.ReThinkSinkConnector < ../conf/quickstarts/rethink-sink.properties
+      ..............
+         "definition": {
+                "name": "connect.rethink.sink.port",
+                "display_name": "connect.rethink.sink.port",
+                "importance": "MEDIUM",
+                "order": 3,
+                "default_value": "28015",
+                "dependents": [],
+                "type": "INT",
+                "required": false,
+                "group": "Connection"
+              },
+              "value": {
+                "name": "connect.rethink.sink.port",
+                "visible": true,
+                "errors": [],
+                "recommended_values": [],
+                "value": "28015"
+              }
+            }]
+          }
+          Validation failed.
+          Missing required configuration "connect.rethink.sink.export.route.query" which has no default value.]: 
+ 
+Pause a Connector
+-----------------
+   
+Command: `pause`
+
+Example: 
+   
+    ./cli pause cassandra-sink
+    Waiting for pause
+    connectorState:  RUNNING
+    workerId: 10.0.0.9:8083
+    numberOfTasks: 1
+    tasks:
+     - taskId: 0
+       taskState: RUNNING
+       workerId: 10.0.0.9:8083
+       
+Resume a Connector
+------------------
+   
+Command: `resume`
+
+Example: 
+   
+    ./cli resume cassandra-sink
+    Waiting for resume
+    connectorState:  RUNNING
+    workerId: 10.0.0.9:8083
+    numberOfTasks: 1
+    tasks:
+     - taskId: 0
+       taskState: RUNNING
+       workerId: 10.0.0.9:8083   
+       
+Restart a Connector
+-------------------
+   
+Command: `restart`
+
+Example: 
+   
+    ./cli restart cassandra-sink
+    Waiting for restart
+    connectorState:  RUNNING
+    workerId: 10.0.0.9:8083
+    numberOfTasks: 1
+    tasks:
+     - taskId: 0
+       taskState: RUNNING
+       workerId: 10.0.0.9:8083          
 
 Misc
 ====
