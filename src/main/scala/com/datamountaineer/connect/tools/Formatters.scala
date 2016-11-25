@@ -62,7 +62,7 @@ class PropertiesFormatter extends Formatter {
   override def connectorInfo(connectorInfo: ConnectorInfo): String =
     s"""${Console.GREEN}#Connector `${connectorInfo.name}`:
        |${connectorInfo.config.toList.map{ kv => s"${kv._1}=${kv._2}"}.mkString("\n")}
-       |#task ids: ${connectorInfo.tasks.map{ t=>t.task.toString}.mkString(sep = "; ")}""".stripMargin
+       |#task ids: ${connectorInfo.tasks.map{ t=>t.task.toString}.mkString(sep = "; ")}${Console.RESET}""".stripMargin
 
   def trace(t:Option[String], indent:String="") =
     t match {
