@@ -1,1 +1,1 @@
-java -jar build/libs/kafka-connect-cli-0.7-all.jar $@
+java -jar build/libs/kafka-connect-cli-0.8-all.jar $@
