@@ -38,7 +38,7 @@ class HumanFormatter extends Formatter {
     s"""${connectorInfo.name}:
        |  config:
        |${connectorInfo.config.toList.map{ kv => s"    ${kv._1}: ${kv._2}"}.mkString("\n")}
-       |  task ids: ${connectorInfo.tasks.map{ t=>t.task.toString}.mkString(sep = "; ")}""".stripMargin
+       |  task ids: ${connectorInfo.tasks.map{ t=>t.task.toString}.mkString(sep = "; ")}${Console.RESET}""".stripMargin
 
   def connectorStatus(s:ConnectorTaskStatus): String = ???
   def connectorPlugins(s: Seq[ConnectorPlugins]): String = ???

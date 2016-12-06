@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/datamountaineer/kafka-connect-tools.svg?branch=master)](https://travis-ci.org/datamountaineer/kafka-connect-tools)
-[<img src="https://img.shields.io/badge/latest%20release-v0.8-blue.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22kafka-connect-cli%22)
+[<img src="https://img.shields.io/badge/latest%20release-v0.9-blue.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22kafka-connect-cli%22)
 
 Connect tools is Maven
 
@@ -7,7 +7,7 @@ Connect tools is Maven
 <dependency>
 	<groupId>com.datamountaineer</groupId>
 	<artifactId>kafka-connect-cli</artifactId>
-	<version>0.8</version>
+	<version>0.9</version>
 </dependency>
 ```
 
@@ -27,7 +27,7 @@ out of band info to `stderr` and non-zero exit status on error. Commands
 dealing with configuration expect or produce data in .properties 
 style: `key=value` lines and comments start with a `#`.
 
-    kafka-connect-cli 0.8
+    kafka-connect-cli 0.9
     Usage: kafka-connect-cli [ps|get|rm|create|run|status|plugins|describe|validate|restart|pause|resume] [options] [<connector-name>]
 
       --help
