@@ -99,6 +99,20 @@ class ApiUnitTests extends FunSuite with Matchers with MockFactory {
     ret shouldEqual Success(List(ConnectorPlugins("andrew")))
   }
 
+  test("pauseConnector") {
+    val mockedClient = mock[HttpClient]
+    (mockedClient.request _).expects(URL.resolve("/connectors/nome/pause"), "PUT", Seq(acceptHeader, contentTypeHeader), None)
+    (mockedClient.request _).expects(URL.resolve("/connectors/nome/status"), "GET",  Seq(acceptHeader, contentTypeHeader), None)
+    new RestKafkaConnectApi(URL, mockedClient).connectorPause("nome")
+  }
+
+  test("resumeConnector") {
+    val mockedClient = mock[HttpClient]
+    (mockedClient.request _).expects(URL.resolve("/connectors/nome/resume"), "PUT", Seq(acceptHeader, contentTypeHeader), None)
+    (mockedClient.request _).expects(URL.resolve("/connectors/nome/status"), "GET",  Seq(acceptHeader, contentTypeHeader), None)
+    new RestKafkaConnectApi(URL, mockedClient).connectorResume("nome")
+  }
+
   test("validate") {
 
     val config = """
