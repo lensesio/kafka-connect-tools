@@ -197,7 +197,7 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
 
   override def connectorPause(name: String): Try[ConnectorTaskStatus] = {
     import MyJsonProtocol._
-    Try(req[Unit](s"/connectors/${name}/pause", "POST"))
+    Try(req[Unit](s"/connectors/${name}/pause", "PUT"))
     println("Waiting for pause")
     Thread.sleep(3000)
     Try(req[ConnectorTaskStatus](s"/connectors/${name}/status").get)
@@ -205,7 +205,7 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
 
   override def connectorResume(name: String): Try[ConnectorTaskStatus] = {
     import MyJsonProtocol._
-    Try(req[Unit](s"/connectors/${name}/resume", "POST"))
+    Try(req[Unit](s"/connectors/${name}/resume", "PUT"))
     println("Waiting for resume")
     Thread.sleep(3000)
     Try(req[ConnectorTaskStatus](s"/connectors/${name}/status").get)
