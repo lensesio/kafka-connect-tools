@@ -160,27 +160,19 @@ class ApiUnitTests extends FunSuite with Matchers with MockFactory {
     ret.get.error_count shouldEqual valid.error_count
     ret.get.configs.head.definition.name shouldEqual valid.configs.head.definition.name
   }
+}
 
-  test("regex") {
-    /** Regex that is used in propsToMap */
-    lazy val keyValueRegex = "^([^#][^=]*)=(.*)$".r
+class ExecuteCommandTest extends FunSuite with Matchers {
+  test("properties") {
+    val lines = List(
+      "some.key=\\",
+      "  val1,\\",
+      "  val2"
+    )
 
-    /**
-      * Translates .properties key values into a String->String map using a regex. Lines starting with # are ignored.
-      *
-      * @param properties the lines containing the properties
-      * @return a map with key -> value
-      */
-    def propsToMap(properties: Seq[String]): Map[String, String] = properties.flatMap(_ match {
-      case keyValueRegex(k, v) => Some((k.trim, v.trim))
-      case _ => None
-    }).toMap
+    val cmd = ExecuteCommand
+    val props = cmd.propsToMap(lines)
 
-
-    val p = Seq("test=b=andrew")
-    val m = propsToMap(p)
-    m.head._1 shouldEqual "test"
-    m.head._2 shouldEqual "b=andrew"
+    props.get("some.key") shouldEqual Some("val1,val2")
   }
-
 }

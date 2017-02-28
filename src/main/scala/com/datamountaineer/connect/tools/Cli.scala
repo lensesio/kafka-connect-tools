@@ -1,7 +1,11 @@
 package com.datamountaineer.connect.tools
 
-import java.io.{PrintWriter, StringWriter}
+import java.io.{PrintWriter, StringReader, StringWriter}
+import java.util.Properties
+
 import scopt._
+
+import scala.collection.JavaConverters
 
 /** Enumeration of CLI commands */
 object AppCommand extends Enumeration {
@@ -97,19 +101,18 @@ object ExecuteCommand {
       x != null
     })
 
-  /** Regex that is used in propsToMap */
-  lazy val keyValueRegex = "^([^#][^=]*)=(.*)$".r
-
   /**
-    * Translates .properties key values into a String->String map using a regex. Lines starting with # are ignored.
+    * Translates .properties key values into a String->String map. Lines starting with # are ignored.
     *
     * @param properties the lines containing the properties
     * @return a map with key -> value
     */
-  def propsToMap(properties: Seq[String]): Map[String, String] = properties.flatMap(_ match {
-    case keyValueRegex(k, v) => Some((k.trim, v.trim))
-    case _ => None
-  }).toMap
+  def propsToMap(properties: Seq[String]): Map[String, String] = {
+    val joined = properties.mkString("\n")
+    val props = new Properties()
+    props.load(new StringReader(joined))
+    JavaConverters.propertiesAsScalaMapConverter(props).asScala.toMap
+  }
 
 }
 
