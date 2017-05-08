@@ -125,7 +125,7 @@ object Cli {
     */
   def parseProgramArgs(args: Array[String]) = {
     new OptionParser[Arguments]("kafka-connect-cli") {
-      head("kafka-connect-cli", "0.7")
+      head("kafka-connect-cli", "1.0.1")
       help("help") text ("prints this usage text")
 
       opt[String]('e', "endpoint") action { (x, c) =>
