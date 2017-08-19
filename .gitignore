@@ -28,3 +28,4 @@ project/plugins/project/
 /.project
 /.classpath
 /test.props
+/bin/connect-cli

@@ -6,10 +6,10 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
-        classpath 'com.github.maiflai:gradle-scalatest:0.14'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.0'
+        classpath 'com.github.maiflai:gradle-scalatest:0.16'
         classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.5.3"
-        classpath 'net.researchgate:gradle-release:2.3.4'
+        classpath 'net.researchgate:gradle-release:2.6.0'
     }
 }
 
@@ -24,6 +24,7 @@ ext {
     akkaVersion = "2.4.3"
     scalaMockVersion = "3.2.2"
     scalaTestVersion = "2.2.6"
+    scalaLoggingVersion = '2.1.2'
 }
 
 apply plugin: 'signing'
@@ -40,20 +41,11 @@ allprojects {
     group = 'com.datamountaineer'
     version = version
     description = "kafka-connect-cli"
-
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
     repositories {
         maven { url "http://repo.maven.apache.org/maven2" }
-    }
-
-    configurations.all {
-        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-            if (details.requested.name == 'log4j') {
-                details.useTarget "org.slf4j:slf4j-api:$slf4jVersion"
-            }
-        }
     }
 }
 
@@ -115,10 +107,9 @@ tasks.withType(Tar) {
 }
 
 task compile(dependsOn: 'compileScala')
-task fatJar(dependsOn : ['test', 'shadowJar', 'makeCli'])
-task fatJarNoTest(dependsOn : 'shadowJar')
+task fatJar(dependsOn : ['test', 'shadowJar'])
 
-println "Building ${name}-${version}"
+task fatJarNoTest(dependsOn : 'shadowJar')
 
 signing {
     sign configurations.archives
@@ -190,9 +181,7 @@ nexusStaging {
     password = ossrhPassword
 }
 
-task makeCli(type: Copy) {
-    from "src/main/resources/cli"
-    into "."
-
-    expand(version: version)
+task makeCli(type: Exec, dependsOn: [fatJar]) {
+    executable "bin/package.sh"
+    args = [version]
 }
