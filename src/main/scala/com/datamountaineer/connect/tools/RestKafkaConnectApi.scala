@@ -161,6 +161,9 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     * @return a ConnectorInfo Try
     */
   def addConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo] = {
+    println("Validating connector properties before posting")
+    connectorPluginsValidate(name, config)
+    println(s"Connector properties valid. Creating connector $name")
     Try(req[ConnectorInfo](s"/connectors", "POST",
       TasklessConnectorInfo(name, config).toJson.toString).get)
   }
@@ -172,6 +175,9 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     * @return a ConnectorInfo Try
     */
   def updateConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo] = {
+    println("Validating connector properties before posting")
+    connectorPluginsValidate(name, config)
+    println(s"Connector properties valid. Creating connector $name")
     import MyJsonProtocol._
     Try(req[ConnectorInfo](s"/connectors/${name}/config", "PUT",
       config.toJson.toString).get)
@@ -226,7 +232,7 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     * */
   def connectorPluginsDescribe(name: String) : Try[ConnectorPluginsValidate] = {
     import MyJsonProtocol._
-    Try(req[ConnectorPluginsValidate](s"/connector-plugins/${name}/config/validate", "PUT", "{}").get)
+    Try(req[ConnectorPluginsValidate](s"/connector-plugins/${name}/config/validate", "PUT", s"""{\"connector.class\": \"${name}\"}""").get)
   }
 
 

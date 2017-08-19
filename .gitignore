@@ -25,3 +25,6 @@ project/plugins/project/
 .idea
 
 /gradle
+/.project
+/.classpath
+/test.props

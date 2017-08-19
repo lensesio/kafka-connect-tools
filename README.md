@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/datamountaineer/kafka-connect-tools.svg?branch=master)](https://travis-ci.org/datamountaineer/kafka-connect-tools)
-[<img src="https://img.shields.io/badge/latest%20release-v1.0-blue.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22kafka-connect-cli%22)
+[<img src="https://img.shields.io/badge/latest%20release-v1.0.2-blue.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22kafka-connect-cli%22)
 
 Connect tools is Maven
 
@@ -7,7 +7,7 @@ Connect tools is Maven
 <dependency>
 	<groupId>com.datamountaineer</groupId>
 	<artifactId>kafka-connect-cli</artifactId>
-	<version>1.0</version>
+	<version>1.0.2</version>
 </dependency>
 ```
 
@@ -27,8 +27,8 @@ out of band info to `stderr` and non-zero exit status on error. Commands
 dealing with configuration expect or produce data in .properties 
 style: `key=value` lines and comments start with a `#`.
 
-    kafka-connect-cli 1.0
-    Usage: kafka-connect-cli [ps|get|rm|create|run|status|plugins|describe|validate|restart|pause|resume] [options] [<connector-name>]
+    connect-cli 1.0.2
+    Usage: connect-cli [ps|get|rm|create|run|status|plugins|describe|validate|restart|pause|resume] [options] [<connector-name>]
 
       --help
             prints this usage text
@@ -100,7 +100,7 @@ Command: `ps`
 
 Example:
 
-    $ ./cli ps
+    $ bin/connect-cli ps
     twitter-source
 
 Get Connector Configuration
@@ -110,7 +110,7 @@ Command: `get`
 
 Example:
 
-    $ ./cli get twitter-source
+    $ bin/connect-cli get twitter-source
     #Connector `twitter-source`:
     name=twitter-source
     tasks.max=1
@@ -127,7 +127,7 @@ Command: `rm`
 
 Example:
 
-    $ ./cli rm twitter-source
+    $ bin/connect-cli rm twitter-source
 
 Create a New Connector
 ----------------------
@@ -138,7 +138,7 @@ Command: `create`
 
 Example:
 
-    $ ./cli create twitter-source <twitter.properties
+    $ bin/connect-cli create twitter-source <twitter.properties
     #Connector `twitter-source`:
     name=twitter-source
     tasks.max=1
@@ -157,7 +157,7 @@ Command: `run`
 
 Example:
 
-    $ ./cli run twitter-source <twitter.properties
+    $ bin/connect-cli run twitter-source <twitter.properties
     #Connector `twitter-source`:
     name=twitter-source
     tasks.max=1
@@ -176,7 +176,7 @@ Command: `status`
 
 Example:
 
-    ./cli status my-toy-connector
+    bin/connect-cli status my-toy-connector
     connectorState: RUNNING
     numberOfTasks: 3
     tasks:
@@ -200,7 +200,7 @@ Command: `plugins`
         
 Example:  
         
-        ./cli plugins
+        bin/connect-cli plugins
         Class name: com.datamountaineeer.streamreactor.connect.blockchain.source.BlockchainSourceConnector
         Class name: com.datamountaineer.streamreactor.connect.elastic.ElasticSinkConnector
         Class name: com.datamountaineer.streamreactor.connect.druid.DruidSinkConnector
@@ -233,7 +233,7 @@ Command: `describe`
 
 Example:
 
-    ./cli describe com.datamountaineer.streamreactor.connect.rethink.sink.ReThinkSinkConnector
+    bin/connect-cli describe ReThinkSinkConnector
     {
       "name": "com.datamountaineer.streamreactor.connect.rethink.sink.ReThinkSinkConnector",
       "error_count": 3,
@@ -268,7 +268,7 @@ Example:
       
  Example: 
       
-      ./cli validate com.datamountaineer.streamreactor.connect.rethink.sink.ReThinkSinkConnector < ../conf/quickstarts/rethink-sink.properties
+      bin/connect-cli validate ReThinkSinkConnector < ../conf/quickstarts/rethink-sink.properties
       ..............
          "definition": {
                 "name": "connect.rethink.sink.port",
@@ -300,7 +300,7 @@ Command: `pause`
 
 Example: 
    
-    ./cli pause cassandra-sink
+    bin/connect-cli pause cassandra-sink
     Waiting for pause
     connectorState:  RUNNING
     workerId: 10.0.0.9:8083
@@ -317,7 +317,7 @@ Command: `resume`
 
 Example: 
    
-    ./cli resume cassandra-sink
+    bin/connect-cli resume cassandra-sink
     Waiting for resume
     connectorState:  RUNNING
     workerId: 10.0.0.9:8083
@@ -334,7 +334,7 @@ Command: `restart`
 
 Example: 
    
-    ./cli restart cassandra-sink
+    bin/connect-cli restart cassandra-sink
     Waiting for restart
     connectorState:  RUNNING
     workerId: 10.0.0.9:8083
