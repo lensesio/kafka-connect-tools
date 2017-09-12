@@ -121,6 +121,10 @@ tasks.withType(Jar) {
     }
 }
 
+task buildCli(type: Exec, dependsOn: [shadowJar]) {
+   commandLine "bin/package.sh", version
+}
+
 if (project.hasProperty('release')) {
 
     // OSSRH publication

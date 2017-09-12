@@ -99,7 +99,7 @@ class PropertiesFormatter extends Formatter {
           val str = errors.mkString("\n")
           s"${json}\n${Console.RED}Validation failed.\n$str\n${Console.RESET}"
         } else {
-          s"${Console.GREEN} ${s.name} \n No validation errors. ${Console.YELLOW} \n\t${props.mkString("\n\t")} ${Console.RESET}"
+          s"${Console.GREEN} ${s.name} \n No validation errors. ${Console.YELLOW}${Console.RESET}"
         }
       }
       case false =>  s"${Console.YELLOW} ${s.toJson.prettyPrint} ${Console.RESET}"

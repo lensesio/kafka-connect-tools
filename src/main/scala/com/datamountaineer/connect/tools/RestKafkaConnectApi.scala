@@ -41,6 +41,10 @@ object ScalajHttpClient extends HttpClient {
         case resp => Success((resp.code, Some(resp.body)))
       }
     } catch {
+      case c: java.net.ConnectException => {
+        println(c.getMessage)
+        Success(404, Some(""))
+      }
       case e: Throwable => Failure(e)
     }
   }
