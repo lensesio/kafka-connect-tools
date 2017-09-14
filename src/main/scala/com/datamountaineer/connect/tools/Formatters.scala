@@ -29,6 +29,7 @@ class HumanFormatter extends Formatter {
     * @return A formatted string
     */
   override def connectorNames(connectorNames: Seq[String]): String = connectorNames.mkString("\n")
+
   /**
     * Formats a ConnectorInfo as a string
     * @param connectorInfo the ConnectorInfo to format

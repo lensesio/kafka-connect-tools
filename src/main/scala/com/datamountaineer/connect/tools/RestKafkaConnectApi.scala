@@ -145,7 +145,15 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     */
   def activeConnectorNames(): Try[Seq[String]] = {
     import MyJsonProtocol._
-    Try(req[List[String]]("/connectors").get)
+    Try({
+        val names = req[List[String]]("/connectors").get
+        if (names.isEmpty) {
+          println(s"${Console.YELLOW}No running connectors${Console.RESET}")
+          names
+        } else {
+          names
+        }
+    })
   }
 
   /**

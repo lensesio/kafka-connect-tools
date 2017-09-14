@@ -107,7 +107,7 @@ tasks.withType(Tar) {
 }
 
 task compile(dependsOn: 'compileScala')
-task fatJar(dependsOn : ['test', 'shadowJar'])
+task fatJar(dependsOn : ['clean', 'test', 'shadowJar'])
 
 task fatJarNoTest(dependsOn : 'shadowJar')
 
@@ -121,7 +121,7 @@ tasks.withType(Jar) {
     }
 }
 
-task buildCli(type: Exec, dependsOn: [shadowJar]) {
+task buildCli(type: Exec, dependsOn: [fatJar]) {
    commandLine "bin/package.sh", version
 }
 
