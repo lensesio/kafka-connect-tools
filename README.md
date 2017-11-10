@@ -28,52 +28,53 @@ dealing with configuration expect or produce data in .properties
 style: `key=value` lines and comments start with a `#`.
 
     connect-cli 1.0.3
-    Usage: connect-cli [ps|get|rm|create|run|status|plugins|describe|validate|restart|pause|resume] [options] [<connector-name>]
+    Usage: connect-cli [ps|get|rm|create|run|diff|status|plugins|describe|validate|restart|pause|resume] [options] [<connector-name>]
 
       --help
             prints this usage text
       -e <value> | --endpoint <value>
             Kafka Connect REST URL, default is http://localhost:8083/
+      -f <value> | --format <value>
+            Format of the config, default is PROPERTIES. Valid options are 'properties' and 'json'.
 
     Command: ps
     list active connectors names.
-
+    
     Command: get
     get the configuration of the specified connector.
-
+    
     Command: rm
     remove the specified connector.
-
+    
     Command: create
-    create the specified connector with the .properties from stdin; the connector cannot already exist.
-
+    create the specified connector with the config from stdin; the connector cannot already exist.
+    
     Command: run
-    create or update the specified connector with the .properties from stdin.
-
+    create or update the specified connector with the config from stdin.
+    
+    Command: diff
+    diff the specified connector with the config from stdin.
+    
     Command: status
     get connector and it's task(s) state(s).
-
-      <connector-name>
-            connector name
     
     Command: plugins
     list the available connector class plugins on the classpath.
     
     Command: describe
     list the configurations for a connector class plugin on the classpath.
-            
-    Command: validate
-    validate the connector properties from stdin against a connector class plugin on the classpath.
-        <class-name (FQDN)>
     
-    Command: restart
-     restart the specified connector.
-        
     Command: pause
     pause the specified connector.
     
+    Command: restart
+    restart the specified connector.
+    
     Command: resume
-    resume the specified connector.    
+    resume the specified connector.
+    
+    Command: validate
+    validate the connector config from stdin against a connector class plugin on the classpath.   
             
             
 You can override the default endpoint by setting an environment variable `KAFKA_CONNECT_REST` i.e.
@@ -84,14 +85,14 @@ To Build
 ========
 
 ```bash
-gradle fatJar
+gradle buildCli
 ```
 
 
 Usage
 =====
 
-Clone this repository, do a `mvn package` and run the jar in a way you prefer, for example with the provided `cli` shell script. The CLI can be used as follows.
+Clone this repository, do a `gradle buildCli` and run the jar in a way you prefer, for example with the provided `cli` shell script. The CLI can be used as follows.
 
 Get Active Connectors
 ---------------------
@@ -154,6 +155,25 @@ Create or Update a Connector
 Either starts a new connector if it did not exist, or update an existing connector.
 
 Command: `run`
+
+Example:
+
+    $ bin/connect-cli run twitter-source <twitter.properties
+    #Connector `twitter-source`:
+    name=twitter-source
+    tasks.max=1
+
+    (snip)
+
+    track.terms=test
+    #task ids: 0
+
+Diff a Connector
+----------------------------
+
+Diffs a connector config with the provided config.
+
+Command: `diff`
 
 Example:
 

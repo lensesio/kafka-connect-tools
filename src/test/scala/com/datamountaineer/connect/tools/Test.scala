@@ -1,11 +1,12 @@
 package com.datamountaineer.connect.tools
 
-import AppCommand._
-import org.scalatest.{FunSuite, Matchers}
+import com.datamountaineer.connect.tools.AppCommand._
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.{FunSuite, Matchers}
 import spray.json._
-import spray.json.{JsonReader, DefaultJsonProtocol}
 import DefaultJsonProtocol._
+import com.google.common.collect.{MapDifference, Maps}
+import scala.collection.JavaConverters._
 
 import scala.util.{Success, Try}
 
@@ -13,25 +14,33 @@ class MainCliUnitTests extends FunSuite with Matchers with MockFactory {
   def split(s:String) = s.split(" ")
 
   test("Valid program arguments are parsed correctly") {
-    Cli.parseProgramArgs(split("ps")) shouldEqual Some(Arguments(LIST_ACTIVE, Defaults.BaseUrl, None))
-    Cli.parseProgramArgs(split("ps -e my_endpoint")) shouldEqual Some(Arguments(LIST_ACTIVE, "my_endpoint", None))
-    Cli.parseProgramArgs(split("rm killit -e my_endpoint")) shouldEqual Some(Arguments(DELETE, "my_endpoint", Some("killit")))
-    Cli.parseProgramArgs(split("get getit")) shouldEqual Some(Arguments(GET, Defaults.BaseUrl, Some("getit")))
-    Cli.parseProgramArgs(split("create createit")) shouldEqual Some(Arguments(CREATE, Defaults.BaseUrl, Some("createit")))
-    Cli.parseProgramArgs(split("run runit")) shouldEqual Some(Arguments(RUN, Defaults.BaseUrl, Some("runit")))
-    Cli.parseProgramArgs(split("plugins")) shouldEqual Some(Arguments(PLUGINS, Defaults.BaseUrl, None))
-    Cli.parseProgramArgs(split("describe myconn")) shouldEqual Some(Arguments(DESCRIBE, Defaults.BaseUrl, Some("myconn")))
-    Cli.parseProgramArgs(split("validate myconn")) shouldEqual Some(Arguments(VALIDATE, Defaults.BaseUrl, Some("myconn")))
+    Cli.parseProgramArgs(split("ps")) shouldEqual Some(Arguments(LIST_ACTIVE, Defaults.BaseUrl, Defaults.Format, None))
+    Cli.parseProgramArgs(split("ps -e my_endpoint")) shouldEqual Some(Arguments(LIST_ACTIVE, "my_endpoint", Defaults.Format, None))
+    Cli.parseProgramArgs(split("rm killit -e my_endpoint")) shouldEqual Some(Arguments(DELETE, "my_endpoint", Defaults.Format, Some("killit")))
+    Cli.parseProgramArgs(split("get getit")) shouldEqual Some(Arguments(GET, Defaults.BaseUrl, Defaults.Format, Some("getit")))
+    Cli.parseProgramArgs(split("create createit")) shouldEqual Some(Arguments(CREATE, Defaults.BaseUrl, Defaults.Format, Some("createit")))
+    Cli.parseProgramArgs(split("run runit")) shouldEqual Some(Arguments(RUN, Defaults.BaseUrl, Defaults.Format, Some("runit")))
+    Cli.parseProgramArgs(split("diff diffit")) shouldEqual Some(Arguments(DIFF, Defaults.BaseUrl, Defaults.Format, Some("diffit")))
+    Cli.parseProgramArgs(split("plugins")) shouldEqual Some(Arguments(PLUGINS, Defaults.BaseUrl, Defaults.Format, None))
+    Cli.parseProgramArgs(split("describe myconn")) shouldEqual Some(Arguments(DESCRIBE, Defaults.BaseUrl, Defaults.Format, Some("myconn")))
+    Cli.parseProgramArgs(split("validate myconn")) shouldEqual Some(Arguments(VALIDATE, Defaults.BaseUrl, Defaults.Format, Some("myconn")))
 
-    Cli.parseProgramArgs(split("restart myconn")) shouldEqual Some(Arguments(RESTART, Defaults.BaseUrl, Some("myconn")))
-    Cli.parseProgramArgs(split("pause myconn")) shouldEqual Some(Arguments(PAUSE, Defaults.BaseUrl, Some("myconn")))
-    Cli.parseProgramArgs(split("resume myconn")) shouldEqual Some(Arguments(RESUME, Defaults.BaseUrl, Some("myconn")))
+    Cli.parseProgramArgs(split("restart myconn")) shouldEqual Some(Arguments(RESTART, Defaults.BaseUrl, Defaults.Format, Some("myconn")))
+    Cli.parseProgramArgs(split("pause myconn")) shouldEqual Some(Arguments(PAUSE, Defaults.BaseUrl, Defaults.Format, Some("myconn")))
+    Cli.parseProgramArgs(split("resume myconn")) shouldEqual Some(Arguments(RESUME, Defaults.BaseUrl, Defaults.Format, Some("myconn")))
   }
 
   test("Invalid program arguments are rejected") {
     Cli.parseProgramArgs(split("fakecmd")) shouldEqual None
     Cli.parseProgramArgs(split("rm")) shouldEqual None
     Cli.parseProgramArgs(split("create good -j nonsense")) shouldEqual None
+  }
+}
+
+class ExecuteCommandUnitTests extends FunSuite with Matchers with MockFactory {
+  test("Config is parsed correctly") {
+    ExecuteCommand.configToMap(Seq("foo = bar", "one = two"), Formats.PROPERTIES) shouldEqual Map(("foo", "bar"), ("one", "two"))
+    ExecuteCommand.configToMap(Seq("{", "\"foo\": \"bar\",", "\"one\": \"two\"", "}"), Formats.JSON) shouldEqual Map(("foo", "bar"), ("one", "two"))
   }
 }
 
@@ -75,6 +84,14 @@ class ApiUnitTests extends FunSuite with Matchers with MockFactory {
     new RestKafkaConnectApi(URL,
       verifyingHttpClient("/connectors", "POST", 200, Some("""{"name":"nom","config":{"k":"v"},"tasks":[{"connector":"c0","task":5}]}"""), verifyBody)
     ).addConnector("some", Map("prop" -> "val")) shouldEqual Success(ConnectorInfo("nom", Map("k" -> "v"), List(Task("c0", 5))))
+  }
+
+  test("diffConnector") {
+    val curr = Map(("k", "v"))
+    val provided = Map(("k", "d"), ("x", "y"))
+    new RestKafkaConnectApi(URL,
+      verifyingHttpClient("/connectors/some", "GET", 200, Some("""{"name":"nom","config":{"k":"v"},"tasks":[{"connector":"c0","task":5}]}"""))
+    ).diffConnector("some", provided) shouldEqual Success((curr, provided, Maps.difference[String,String](curr.asJava, provided.asJava)))
   }
 
   test("updateConnector") {
