@@ -2,10 +2,12 @@ package com.datamountaineer.connect.tools
 
 import scalaj.http.Http
 import spray.json._
-import scala.util.{Try, Success, Failure}
+
+import scala.util.{Failure, Success, Try}
 import DefaultJsonProtocol._
 import MyJsonProtocol._
-
+import com.google.common.collect.{MapDifference, Maps}
+import scala.collection.JavaConverters._
 
 /** Allows one to do HTTP requests */
 trait HttpClient {
@@ -193,6 +195,21 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     import MyJsonProtocol._
     Try(req[ConnectorInfo](s"/connectors/${name}/config", "PUT",
       config.toJson.toString).get)
+  }
+
+  /**
+    * Diffs the connector config with the provided config
+    * @param name the name of the connector to update or create
+    * @param config a string->string map with its config
+    * @return a ConnectorInfo Try
+    */
+  def diffConnector(name: String, config: Map[String,String]) : Try[(Map[String, String], Map[String, String], MapDifference[String,String])] = {
+    println("Validating connector properties before diffing")
+    connectorPluginsValidate(name, config)
+    println(s"Connector properties valid. Diffing connector $name against provided config")
+    connectorInfo(name).map(info => {
+      (info.config, config, Maps.difference[String,String](info.config.asJava, config.asJava))
+    })
   }
 
   /**

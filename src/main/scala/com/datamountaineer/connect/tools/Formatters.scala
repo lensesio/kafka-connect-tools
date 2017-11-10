@@ -1,5 +1,8 @@
 package com.datamountaineer.connect.tools
 
+import com.google.common.collect.MapDifference
+import scala.collection.JavaConverters._
+
 /** A collection of methods that translate the output of the API into some string representation */
 trait Formatter {
   /**
@@ -15,6 +18,15 @@ trait Formatter {
     * @return A formatted string
     */
   def connectorInfo(connectorInfo: ConnectorInfo) : String
+
+  /**
+    * Formats a MapDifference as a string
+    * @param current the current config
+    * @param provided the config provided by the user
+    * @param connectorInfo the MapDifference to format
+    * @return A formatted string
+    */
+  def connectorDiff(current: Map[String,String], provided: Map[String,String], connectorInfo: MapDifference[String,String]) : String
 
   def connectorStatus(s:ConnectorTaskStatus): String
   def connectorPlugins(s: Seq[ConnectorPlugins]) : String
@@ -41,6 +53,7 @@ class HumanFormatter extends Formatter {
        |${connectorInfo.config.toList.map{ kv => s"    ${kv._1}: ${kv._2}"}.mkString("\n")}
        |  task ids: ${connectorInfo.tasks.map{ t=>t.task.toString}.mkString(sep = "; ")}${Console.RESET}""".stripMargin
 
+  def connectorDiff(current: Map[String,String], provided: Map[String,String], diff: MapDifference[String,String]): String = ???
   def connectorStatus(s:ConnectorTaskStatus): String = ???
   def connectorPlugins(s: Seq[ConnectorPlugins]): String = ???
   def connectorPluginsValidate(s: ConnectorPluginsValidate, validate: Boolean, props: Map[String, String] = Map.empty) : String = ???
@@ -64,6 +77,28 @@ class PropertiesFormatter extends Formatter {
     s"""${Console.GREEN}#Connector `${connectorInfo.name}`:
        |${connectorInfo.config.toList.map{ kv => s"${kv._1}=${kv._2}"}.mkString("\n")}
        |#task ids: ${connectorInfo.tasks.map{ t=>t.task.toString}.mkString(sep = "; ")}${Console.RESET}""".stripMargin
+
+  /**
+    * Formats a MapDifference as a string
+    * @param diff the MapDifference to format
+    * @return A formatted string
+    */
+  override def connectorDiff(current: Map[String,String], provided: Map[String,String], diff: MapDifference[String,String]): String =
+    s"""${Console.GREEN}
+       |#current config:
+       |${current.mkString("\n")}
+       |
+       |#provided config:
+       |${provided.mkString("\n")}
+       |
+       |#entry value diffs:
+       |${diff.entriesDiffering().asScala.mkString("\n")}
+       |
+       |#entries only in current config:
+       |${diff.entriesOnlyOnLeft().asScala.mkString("\n")}
+       |
+       |#entries only in provided config:
+       |${diff.entriesOnlyOnRight.asScala.mkString("\n")}""".stripMargin
 
   def trace(t:Option[String], indent:String="") =
     t match {

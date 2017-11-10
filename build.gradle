@@ -22,6 +22,7 @@ ext {
     scalajHttpVerson = "2.2.1"
     scoptVersion = "3.4.0"
     akkaVersion = "2.4.3"
+    guavaVersion = "23.0"
     scalaMockVersion = "3.2.2"
     scalaTestVersion = "2.2.6"
     scalaLoggingVersion = '2.1.2'
@@ -56,6 +57,7 @@ dependencies {
     compile group: 'org.scalaj', name: "scalaj-http_$scalaMajorVersion", version: scalajHttpVerson
     compile group: 'com.github.scopt', name: "scopt_$scalaMajorVersion", version: scoptVersion
     compile group: 'com.typesafe.akka', name: "akka-actor_$scalaMajorVersion", version: akkaVersion
+    compile group: 'com.google.guava', name: 'guava', version: guavaVersion
     testCompile group: 'org.scalamock', name: "scalamock-scalatest-support_$scalaMajorVersion", version: scalaMockVersion
     testCompile group: 'org.scalatest', name: "scalatest_$scalaMajorVersion", version: scalaTestVersion
     testRuntime 'org.pegdown:pegdown:1.1.0'
