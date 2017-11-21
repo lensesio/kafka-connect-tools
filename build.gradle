@@ -178,7 +178,6 @@ if (project.hasProperty('release')) {
 
         }
     }
-
 }
 
 nexusStaging {

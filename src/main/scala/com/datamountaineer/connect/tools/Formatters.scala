@@ -120,7 +120,7 @@ class PropertiesFormatter extends Formatter {
     s"${s.tasks.map(taskStatus).mkString("")}"
 
   override def connectorPlugins(s: Seq[ConnectorPlugins]): String = {
-    s.map(_.toString).sorted.map(s=> s"Class name: $s").mkString("\n")
+    s.map(s => s"Class name: ${s.`class`}, Type: ${s.`type`}, Version: ${s.version.getOrElse("")}").mkString("\n")
   }
 
   override def connectorPluginsValidate(s: ConnectorPluginsValidate, validate: Boolean = false, props: Map[String, String] = Map.empty): String = {

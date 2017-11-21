@@ -18,7 +18,7 @@ case class TasklessConnectorInfo(name: String, config: Map[String,String])
 case class ConnectorStatus(state:String,worker_id:String, trace:Option[String])
 case class TaskStatus(id:Int, state:String,worker_id:String,trace:Option[String])
 case class ConnectorTaskStatus(name:String, connector: ConnectorStatus,  tasks: List[TaskStatus])
-case class ConnectorPlugins(`class` :String)
+case class ConnectorPlugins(`class` :String, `type`: String, version: Option[String])
 
 case class Definition(name: String, `type`: String, required: Boolean, default_value: Option[String],
                       importance: Option[String], group: Option[String], display_name: Option[String],
@@ -36,7 +36,7 @@ object MyJsonProtocol extends DefaultJsonProtocol {
   implicit val connectorstatus = jsonFormat3(ConnectorStatus)
   implicit val taskstatus = jsonFormat4(TaskStatus)
   implicit val connectortaskstatus = jsonFormat3(ConnectorTaskStatus)
-  implicit val connectorplugins = jsonFormat1(ConnectorPlugins)
+  implicit val connectorplugins = jsonFormat3(ConnectorPlugins)
   implicit val values = jsonFormat5(Values)
   implicit val definitions = jsonFormat9(Definition)
   implicit val configs = jsonFormat2(Configs)
