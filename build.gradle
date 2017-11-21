@@ -145,12 +145,12 @@ if (project.hasProperty('release')) {
                     name project.name
                     description project.description
                     packaging 'jar'
-                    url 'https://github.com/datamountaineer/kafka-connect-tools'
+                    url 'https://github.com/landoop/kafka-connect-tools'
 
                     scm {
-                        connection 'scm:git:https://github.com/datamountaineer/kafka-connect-tools.git'
-                        developerConnection 'scm:git:git@github.com:datamountaineer/kafka-connect-tools.git'
-                        url 'https://github.com/datamountaineer/kafka-connect-tools.git'
+                        connection 'scm:git:https://github.com/landoop/kafka-connect-tools.git'
+                        developerConnection 'scm:git:git@github.com:landoop/kafka-connect-tools.git'
+                        url 'https://github.com/landoop/kafka-connect-tools.git'
                     }
 
                     licenses {
@@ -165,7 +165,7 @@ if (project.hasProperty('release')) {
                         developer {
                             id = 'andrewstevenson'
                             name = 'Andrew Stevenson'
-                            email = 'andrew@datamountaineer.com'
+                            email = 'andrew@landoop.com'
                         }
                         developer {
                             id = 'rollulus'
