@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/landoop/kafka-connect-tools.svg?branch=master)](https://travis-ci.org/landoop/kafka-connect-tools)
+[![Build Status](https://travis-ci.org/Landoop/kafka-connect-tools.svg?branch=master)](https://travis-ci.org/Landoop/kafka-connect-tools)
 [<img src="https://img.shields.io/badge/latest%20release-v1.0.5-blue.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22kafka-connect-cli%22)
 
 Connect tools is Maven
