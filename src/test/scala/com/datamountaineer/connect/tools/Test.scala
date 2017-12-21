@@ -14,20 +14,23 @@ class MainCliUnitTests extends FunSuite with Matchers with MockFactory {
   def split(s:String) = s.split(" ")
 
   test("Valid program arguments are parsed correctly") {
-    Cli.parseProgramArgs(split("ps")) shouldEqual Some(Arguments(LIST_ACTIVE, Defaults.BaseUrl, Defaults.Format, None))
-    Cli.parseProgramArgs(split("ps -e my_endpoint")) shouldEqual Some(Arguments(LIST_ACTIVE, "my_endpoint", Defaults.Format, None))
-    Cli.parseProgramArgs(split("rm killit -e my_endpoint")) shouldEqual Some(Arguments(DELETE, "my_endpoint", Defaults.Format, Some("killit")))
-    Cli.parseProgramArgs(split("get getit")) shouldEqual Some(Arguments(GET, Defaults.BaseUrl, Defaults.Format, Some("getit")))
-    Cli.parseProgramArgs(split("create createit")) shouldEqual Some(Arguments(CREATE, Defaults.BaseUrl, Defaults.Format, Some("createit")))
-    Cli.parseProgramArgs(split("run runit")) shouldEqual Some(Arguments(RUN, Defaults.BaseUrl, Defaults.Format, Some("runit")))
-    Cli.parseProgramArgs(split("diff diffit")) shouldEqual Some(Arguments(DIFF, Defaults.BaseUrl, Defaults.Format, Some("diffit")))
-    Cli.parseProgramArgs(split("plugins")) shouldEqual Some(Arguments(PLUGINS, Defaults.BaseUrl, Defaults.Format, None))
-    Cli.parseProgramArgs(split("describe myconn")) shouldEqual Some(Arguments(DESCRIBE, Defaults.BaseUrl, Defaults.Format, Some("myconn")))
-    Cli.parseProgramArgs(split("validate myconn")) shouldEqual Some(Arguments(VALIDATE, Defaults.BaseUrl, Defaults.Format, Some("myconn")))
+    Cli.parseProgramArgs(split("ps")) shouldEqual Some(Arguments(LIST_ACTIVE, Defaults.BaseUrl, Defaults.Format, None, None))
+    Cli.parseProgramArgs(split("ps -e my_endpoint")) shouldEqual Some(Arguments(LIST_ACTIVE, "my_endpoint", Defaults.Format, None, None))
+    Cli.parseProgramArgs(split("rm killit -e my_endpoint")) shouldEqual Some(Arguments(DELETE, "my_endpoint", Defaults.Format, Some("killit"), None))
+    Cli.parseProgramArgs(split("get getit")) shouldEqual Some(Arguments(GET, Defaults.BaseUrl, Defaults.Format, Some("getit"), None))
+    Cli.parseProgramArgs(split("create createit")) shouldEqual Some(Arguments(CREATE, Defaults.BaseUrl, Defaults.Format, Some("createit"), None))
+    Cli.parseProgramArgs(split("run runit")) shouldEqual Some(Arguments(RUN, Defaults.BaseUrl, Defaults.Format, Some("runit"), None))
+    Cli.parseProgramArgs(split("diff diffit")) shouldEqual Some(Arguments(DIFF, Defaults.BaseUrl, Defaults.Format, Some("diffit"), None))
+    Cli.parseProgramArgs(split("plugins")) shouldEqual Some(Arguments(PLUGINS, Defaults.BaseUrl, Defaults.Format, None, None))
+    Cli.parseProgramArgs(split("describe myconn")) shouldEqual Some(Arguments(DESCRIBE, Defaults.BaseUrl, Defaults.Format, Some("myconn"), None))
+    Cli.parseProgramArgs(split("validate myconn")) shouldEqual Some(Arguments(VALIDATE, Defaults.BaseUrl, Defaults.Format, Some("myconn"), None))
+    Cli.parseProgramArgs(split("task_ps myconn")) shouldEqual Some(Arguments(TASK_LIST, Defaults.BaseUrl, Defaults.Format, Some("myconn"), None))
+    Cli.parseProgramArgs(split("task_status myconn 0")) shouldEqual Some(Arguments(TASK_STATUS, Defaults.BaseUrl, Defaults.Format, Some("myconn"), Some(0)))
+    Cli.parseProgramArgs(split("task_restart myconn 0")) shouldEqual Some(Arguments(TASK_RESTART, Defaults.BaseUrl, Defaults.Format, Some("myconn"), Some(0)))
 
-    Cli.parseProgramArgs(split("restart myconn")) shouldEqual Some(Arguments(RESTART, Defaults.BaseUrl, Defaults.Format, Some("myconn")))
-    Cli.parseProgramArgs(split("pause myconn")) shouldEqual Some(Arguments(PAUSE, Defaults.BaseUrl, Defaults.Format, Some("myconn")))
-    Cli.parseProgramArgs(split("resume myconn")) shouldEqual Some(Arguments(RESUME, Defaults.BaseUrl, Defaults.Format, Some("myconn")))
+    Cli.parseProgramArgs(split("restart myconn")) shouldEqual Some(Arguments(RESTART, Defaults.BaseUrl, Defaults.Format, Some("myconn"), None))
+    Cli.parseProgramArgs(split("pause myconn")) shouldEqual Some(Arguments(PAUSE, Defaults.BaseUrl, Defaults.Format, Some("myconn"), None))
+    Cli.parseProgramArgs(split("resume myconn")) shouldEqual Some(Arguments(RESUME, Defaults.BaseUrl, Defaults.Format, Some("myconn"), None))
   }
 
   test("Invalid program arguments are rejected") {
@@ -51,13 +54,13 @@ class ApiUnitTests extends FunSuite with Matchers with MockFactory {
   val contentTypeHeader = "Content-Type" -> "application/json"
 
   // creates a HttpClient mock that verifies input and produces output
-  def verifyingHttpClient(endpoint: String, method: String, status: Int, resp: Option[String], verifyBody: String => Unit = a => {}) = {
+  def verifyingHttpClient(endpoint: String, method: String, status: Int, resp: Option[String], verifyReqBody: String => Unit = a => {}) = {
     new HttpClient {
       def request(url: java.net.URI, method: String, hdrs: Seq[(String, String)], reqBody: Option[String]): Try[(Int, Option[String])] = {
         url shouldEqual URL.resolve(endpoint)
         method shouldEqual method
         hdrs should contain allOf(acceptHeader, contentTypeHeader)
-        reqBody.foreach(verifyBody)
+        reqBody.foreach(verifyReqBody)
         Success((status, resp))
       }
     }
@@ -128,6 +131,24 @@ class ApiUnitTests extends FunSuite with Matchers with MockFactory {
     (mockedClient.request _).expects(URL.resolve("/connectors/nome/resume"), "PUT", Seq(acceptHeader, contentTypeHeader), None)
     (mockedClient.request _).expects(URL.resolve("/connectors/nome/status"), "GET",  Seq(acceptHeader, contentTypeHeader), None)
     new RestKafkaConnectApi(URL, mockedClient).connectorResume("nome")
+  }
+
+  test("tasks") {
+    new RestKafkaConnectApi(URL,
+      verifyingHttpClient("/connectors/some/tasks", "GET", 200, Some("""[{"id":{"connector":"some","task":0},"config":{"k":"v"}}]"""), _ => ())
+    ).tasks("some") shouldEqual Success(List(TaskInfo(TaskId("some", 0), Map("k" -> "v"))))
+  }
+
+  test("taskStatus") {
+    new RestKafkaConnectApi(URL,
+      verifyingHttpClient("/connectors/some/tasks/1/status", "GET", 200, Some("""{"state":"RUNNING","id":1,"worker_id":"10.0.0.9:8083"}"""), _ => ())
+    ).taskStatus("some", 1) shouldEqual Success(TaskStatus(1, "RUNNING", "10.0.0.9:8083", None))
+  }
+
+  test("taskRestart") {
+    new RestKafkaConnectApi(URL,
+      verifyingHttpClient("/connectors/some/tasks/1/restart", "POST", 200, None, _ => ())
+    ).taskRestart("some", 1) shouldEqual Success()
   }
 
   test("validate") {

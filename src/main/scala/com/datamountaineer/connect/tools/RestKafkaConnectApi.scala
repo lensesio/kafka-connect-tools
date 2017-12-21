@@ -101,6 +101,8 @@ trait KafkaConnectApi {
   def connectorPause(name: String) : Try[ConnectorTaskStatus]
   def connectorRestart(name: String) : Try[ConnectorTaskStatus]
   def connectorResume(name: String) : Try[ConnectorTaskStatus]
+
+  def taskRestart(connector: String, taskId: Int) : Try[Unit]
 }
 
 /** Kafka Connect Api interface */
@@ -206,7 +208,7 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
   def diffConnector(name: String, config: Map[String,String]) : Try[(Map[String, String], Map[String, String], MapDifference[String,String])] = {
     println("Validating connector properties before diffing")
     connectorPluginsValidate(name, config)
-    println(s"Connector properties valid. Diffing connector $name against provided config")
+    println(s"Connector properties valid. Diffing connector ${name} against provided config")
     connectorInfo(name).map(info => {
       (info.config, config, Maps.difference[String,String](info.config.asJava, config.asJava))
     })
@@ -273,6 +275,21 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
   def connectorStatus(name:String):Try[ConnectorTaskStatus] = {
     import MyJsonProtocol._
     Try(req[ConnectorTaskStatus](s"/connectors/${name}/status").get)
+  }
+
+  def tasks(connector: String): Try[List[TaskInfo]] = {
+    import MyJsonProtocol._
+    Try(req[List[TaskInfo]](s"/connectors/$connector/tasks").get)
+  }
+
+  def taskStatus(connector: String, taskId: Int): Try[TaskStatus] = {
+    import MyJsonProtocol._
+    Try(req[TaskStatus](s"/connectors/$connector/tasks/$taskId/status").get)
+  }
+
+  def taskRestart(connector: String, taskId: Int): Try[Unit] = {
+    import MyJsonProtocol._
+    Try(req[Unit](s"/connectors/$connector/tasks/$taskId/restart", "POST"))
   }
 
 }

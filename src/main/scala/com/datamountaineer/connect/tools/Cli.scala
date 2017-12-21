@@ -13,7 +13,8 @@ import scala.collection.JavaConverters
 /** Enumeration of CLI commands */
 object AppCommand extends Enumeration {
   type AppCommand = Value
-  val NONE, LIST_ACTIVE, GET, DELETE, CREATE, RUN, DIFF, STATUS, PLUGINS, DESCRIBE, RESTART, PAUSE, RESUME, VALIDATE = Value
+  val NONE, LIST_ACTIVE, GET, DELETE, CREATE, RUN, DIFF, STATUS, PLUGINS, DESCRIBE, RESTART, PAUSE, RESUME, VALIDATE,
+  TASK_LIST, TASK_STATUS, TASK_RESTART = Value
 }
 import com.datamountaineer.connect.tools.AppCommand._
 
@@ -37,8 +38,11 @@ object Defaults {
   * @param url the url of the REST service, defaults to Defaults.BaseUrl
   * @param format the format of the config, defaults to Defaults.Format (can be "PROPERTIES" or "JSON")
   * @param connectorName an optional connector name that is the subject of the command
+  * @param taskId an optional task id that is the subject of the command
   */
-case class Arguments(cmd: AppCommand = NONE, url: String = Defaults.BaseUrl, format: Formats = Defaults.Format, connectorName: Option[String] = None)
+case class Arguments(cmd: AppCommand = NONE, url: String = Defaults.BaseUrl, format: Formats = Defaults.Format,
+                     connectorName: Option[String] = None,
+                     taskId: Option[Int] = None)
 
 /** Performs the action contained in the Arguments on RestKafkaConnectApi */
 object ExecuteCommand {
@@ -55,6 +59,7 @@ object ExecuteCommand {
     val fmt = new PropertiesFormatter()
     val cmd = cfg.cmd
     lazy val connectorName = cfg.connectorName.get
+    lazy val taskId = cfg.taskId.get
 
     lazy val configuration =  coherentConfig(configToMap(allStdIn.toSeq, cfg.format), connectorName, cmd)
 
@@ -72,6 +77,9 @@ object ExecuteCommand {
       case PAUSE => api.connectorPause(connectorName).map(fmt.connectorStatus).map(Some(_))
       case RESTART => api.connectorRestart(connectorName).map(fmt.connectorStatus).map(Some(_))
       case RESUME => api.connectorResume(connectorName).map(fmt.connectorStatus).map(Some(_))
+      case TASK_LIST => api.tasks(connectorName).map(fmt.tasks).map(Some(_))
+      case TASK_STATUS => api.taskStatus(connectorName, taskId).map(fmt.taskStatus).map(Some(_))
+      case TASK_RESTART => api.taskRestart(connectorName, taskId).map(_ => None)
     }
     res.recover{
       case ApiErrorException(e) => Some(e)
@@ -170,14 +178,22 @@ object Cli {
       cmd("restart") action { (_,c) => c.copy(cmd = RESTART) } text "restart the specified connector.\n" children()
       cmd("resume") action { (_,c) => c.copy(cmd = RESUME) } text "resume the specified connector.\n" children()
       cmd("validate") action { (_,c) => c.copy(cmd = VALIDATE) } text "validate the connector config from stdin against a connector class plugin on the classpath.\n" children()
+      cmd("task_ps") action { (_,c) => c.copy(cmd = TASK_LIST) } text "list the tasks belonging to a connector.\n" children()
+      cmd("task_status") action { (_,c) => c.copy(cmd = TASK_STATUS) } text "get the status of a connector task.\n" children()
+      cmd("task_restart") action { (_,c) => c.copy(cmd = TASK_RESTART) } text "restart the specified connector task.\n" children()
 
       arg[String]("<connector-name>") optional() action { (x, c) =>
         c.copy(connectorName = Some(x))
       } text ("connector name")
 
+      arg[Int]("<task-id>") optional() action { (x, c) =>
+        c.copy(taskId = Some(x))
+      } text ("task id")
+
       checkConfig { c =>
         if (c.cmd == NONE) failure("Command expected.")
         else if ((c.cmd != LIST_ACTIVE  && c.cmd != PLUGINS && c.cmd != DESCRIBE) && c.connectorName.isEmpty) failure("Please specify the connector-name")
+        else if ((c.cmd == TASK_LIST  || c.cmd == TASK_STATUS || c.cmd == TASK_RESTART) && c.connectorName.isEmpty) failure("Please specify the task-id")
         else success
       }
     }.parse(args, Arguments())
