@@ -28,7 +28,7 @@ dealing with configuration expect or produce data in .properties
 style: `key=value` lines and comments start with a `#`.
 
     connect-cli 1.0.5
-    Usage: connect-cli [ps|get|rm|create|run|diff|status|plugins|describe|validate|restart|pause|resume] [options] [<connector-name>]
+    Usage: connect-cli [ps|get|rm|create|run|diff|status|plugins|describe|validate|restart|pause|resume] [options] [<connector-name>] [<task-id>]
 
       --help
             prints this usage text
@@ -37,46 +37,54 @@ style: `key=value` lines and comments start with a `#`.
       -f <value> | --format <value>
             Format of the config, default is PROPERTIES. Valid options are 'properties' and 'json'.
 
-    Command: ps
-    list active connectors names.
+      Command: ps
+      list active connectors names.
+      
+      Command: get
+      get the configuration of the specified connector.
+      
+      Command: rm
+      remove the specified connector.
+      
+      Command: create
+      create the specified connector with the config from stdin; the connector cannot already exist.
+      
+      Command: run
+      create or update the specified connector with the config from stdin.
+      
+      Command: diff
+      diff the specified connector with the config from stdin.
+      
+      Command: status
+      get connector and it's task(s) state(s).
+      
+      Command: plugins
+      list the available connector class plugins on the classpath.
+      
+      Command: describe
+      list the configurations for a connector class plugin on the classpath.
+      
+      Command: pause
+      pause the specified connector.
+      
+      Command: restart
+      restart the specified connector.
+      
+      Command: resume
+      resume the specified connector.
+      
+      Command: validate
+      validate the connector config from stdin against a connector class plugin on the classpath.
+      
+      Command: task_ps
+      list the tasks belonging to a connector.
+      
+      Command: task_status
+      get the status of a connector task.
+      
+      Command: task_restart
+      restart the specified connector task.
     
-    Command: get
-    get the configuration of the specified connector.
-    
-    Command: rm
-    remove the specified connector.
-    
-    Command: create
-    create the specified connector with the config from stdin; the connector cannot already exist.
-    
-    Command: run
-    create or update the specified connector with the config from stdin.
-    
-    Command: diff
-    diff the specified connector with the config from stdin.
-    
-    Command: status
-    get connector and it's task(s) state(s).
-    
-    Command: plugins
-    list the available connector class plugins on the classpath.
-    
-    Command: describe
-    list the configurations for a connector class plugin on the classpath.
-    
-    Command: pause
-    pause the specified connector.
-    
-    Command: restart
-    restart the specified connector.
-    
-    Command: resume
-    resume the specified connector.
-    
-    Command: validate
-    validate the connector config from stdin against a connector class plugin on the classpath.   
-            
-            
 You can override the default endpoint by setting an environment variable `KAFKA_CONNECT_REST` i.e.
 
     export KAFKA_CONNECT_REST="http://myserver:myport"
@@ -363,6 +371,41 @@ Example:
      - taskId: 0
        taskState: RUNNING
        workerId: 10.0.0.9:8083          
+
+List all Tasks of a Connector
+-----------------------------
+
+Command: `task_ps`
+
+Example:
+
+    bin/connect-cli tasks_ps cassandra-sink
+    - cassandra-sink task 0
+      connector.class: com.datamountaineer.streamreactor.connect.cassandra.sink.CassandraSinkConnector
+      bootstrap.servers: kafka-broker1:6667,kafka-broker2:6667,kafka-broker3:6667
+      producer.schema.registry.url:http://schema-registry:8081
+      ...
+      
+Get the status of a Connector Task
+----------------------------------
+
+Command: `task_status`
+
+Example:
+
+    bin/connect-cli task_status cassandra-sink 0
+    taskId: 0
+    taskState: RUNNING
+    workerId: 10.0.0.9:8083
+    
+Restart a Connector Task
+------------------------
+
+Command: `task_restart`
+
+Example:
+
+    bin/connect-cli task_restart cassandra-sink 0
 
 Misc
 ====
