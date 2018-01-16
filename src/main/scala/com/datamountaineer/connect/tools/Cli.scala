@@ -5,7 +5,6 @@ import java.util.Properties
 
 import spray.json._
 import DefaultJsonProtocol._
-import com.google.common.collect.MapDifference
 import scopt._
 
 import scala.collection.JavaConverters
@@ -148,7 +147,7 @@ object Cli {
     */
   def parseProgramArgs(args: Array[String]) = {
     new OptionParser[Arguments]("kafka-connect-cli") {
-      head("kafka-connect-cli", "1.0.1")
+      head("kafka-connect-cli", "1.0.6")
       help("help") text ("prints this usage text")
 
       opt[String]('e', "endpoint") action { (x, c) =>

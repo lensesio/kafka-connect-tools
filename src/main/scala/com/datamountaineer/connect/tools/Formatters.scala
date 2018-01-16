@@ -50,7 +50,7 @@ class HumanFormatter extends Formatter {
   override def connectorInfo(connectorInfo: ConnectorInfo): String =
     s"""${connectorInfo.name}:
        |  config:
-       |${connectorInfo.config.toList.map{ kv => s"    ${kv._1}: ${kv._2}"}.mkString("\n")}
+       |${connectorInfo.config.toList.map{ kv => s"    ${kv._1}: ${if (kv._1.contains("password") || kv._1.contains("secret")) "**********" else kv._2}"}.mkString("\n")}
        |  task ids: ${connectorInfo.tasks.map{ t=>t.task.toString}.mkString(sep = "; ")}${Console.RESET}""".stripMargin
 
   def connectorDiff(current: Map[String,String], provided: Map[String,String], diff: MapDifference[String,String]): String = ???
@@ -75,7 +75,7 @@ class PropertiesFormatter extends Formatter {
     */
   override def connectorInfo(connectorInfo: ConnectorInfo): String =
     s"""${Console.GREEN}#Connector `${connectorInfo.name}`:
-       |${connectorInfo.config.toList.map{ kv => s"${kv._1}=${kv._2}"}.mkString("\n")}
+       |${connectorInfo.config.toList.map{ kv => s"${kv._1}=${if (kv._1.contains("password") || kv._1.contains("secret")) "**********" else kv._2}"}.mkString("\n")}
        |#task ids: ${connectorInfo.tasks.map{ t=>t.task.toString}.mkString(sep = "; ")}${Console.RESET}""".stripMargin
 
   /**
