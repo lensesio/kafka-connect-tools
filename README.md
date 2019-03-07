@@ -96,6 +96,20 @@ To Build
 gradle buildCli
 ```
 
+Docker support
+============
+
+You can build a Docker image from your source directory:
+
+```bash
+docker build -t kafka-connect-tools .
+```
+
+Then use it to run the CLI:
+
+```bash
+docker run -e KAFKA_CONNECT_REST="http://myserver:myport" kafka-connect-tools connect-cli ps
+```
 
 Usage
 =====
