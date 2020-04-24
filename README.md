@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/Landoop/kafka-connect-tools.svg?branch=master)](https://travis-ci.org/Landoop/kafka-connect-tools)
-[<img src="https://img.shields.io/badge/latest%20release-v1.0.6-blue.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22kafka-connect-cli%22)
 
 Connect tools is Maven
 
@@ -7,7 +5,7 @@ Connect tools is Maven
 <dependency>
 	<groupId>com.datamountaineer</groupId>
 	<artifactId>kafka-connect-cli</artifactId>
-	<version>1.0.6</version>
+	<version>1.0.7</version>
 </dependency>
 ```
 
@@ -27,7 +25,7 @@ out of band info to `stderr` and non-zero exit status on error. Commands
 dealing with configuration expect or produce data in .properties 
 style: `key=value` lines and comments start with a `#`.
 
-    connect-cli 1.0.6
+    connect-cli 1.0.8
     Usage: connect-cli [ps|get|rm|create|run|diff|status|plugins|describe|validate|restart|pause|resume] [options] [<connector-name>]
 
       --help

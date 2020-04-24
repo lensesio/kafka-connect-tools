@@ -6,10 +6,10 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.0'
-        classpath 'com.github.maiflai:gradle-scalatest:0.22'
-        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.5.3"
-        classpath 'net.researchgate:gradle-release:2.6.0'
+        classpath 'com.github.maiflai:gradle-scalatest:0.21'
+        classpath 'io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.11.0'
+        classpath 'net.researchgate:gradle-release:2.7.0'
+        classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
     }
 }
 
@@ -46,7 +46,7 @@ allprojects {
     targetCompatibility = 1.8
 
     repositories {
-        maven { url "http://repo.maven.apache.org/maven2" }
+        maven { url "https://repo.maven.apache.org/maven2" }
     }
 }
 
@@ -165,12 +165,7 @@ if (project.hasProperty('release')) {
                         developer {
                             id = 'andrewstevenson'
                             name = 'Andrew Stevenson'
-                            email = 'andrew@landoop.com'
-                        }
-                        developer {
-                            id = 'rollulus'
-                            name = 'Roel'
-                            email = 'rollulus@xs4all.nl'
+                            email = 'andrew@lenses.io'
                         }
                     }
                 }

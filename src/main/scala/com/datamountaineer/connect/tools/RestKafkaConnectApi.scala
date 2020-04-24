@@ -177,8 +177,6 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     * @return a ConnectorInfo Try
     */
   def addConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo] = {
-    println("Validating connector properties before posting")
-    connectorPluginsValidate(name, config)
     println(s"Connector properties valid. Creating connector $name")
     Try(req[ConnectorInfo](s"/connectors", "POST",
       TasklessConnectorInfo(name, config).toJson.toString).get)
@@ -191,8 +189,6 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     * @return a ConnectorInfo Try
     */
   def updateConnector(name: String, config: Map[String,String]) : Try[ConnectorInfo] = {
-    println("Validating connector properties before posting")
-    connectorPluginsValidate(name, config)
     println(s"Connector properties valid. Creating connector $name")
     import MyJsonProtocol._
     Try(req[ConnectorInfo](s"/connectors/${name}/config", "PUT",
@@ -206,8 +202,6 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     * @return a ConnectorInfo Try
     */
   def diffConnector(name: String, config: Map[String,String]) : Try[(Map[String, String], Map[String, String], MapDifference[String,String])] = {
-    println("Validating connector properties before diffing")
-    connectorPluginsValidate(name, config)
     println(s"Connector properties valid. Diffing connector ${name} against provided config")
     connectorInfo(name).map(info => {
       (info.config, config, Maps.difference[String,String](info.config.asJava, config.asJava))
@@ -263,7 +257,7 @@ class RestKafkaConnectApi(baseUrl: java.net.URI, httpClient: HttpClient = Scalaj
     * */
   def connectorPluginsDescribe(name: String) : Try[ConnectorPluginsValidate] = {
     import MyJsonProtocol._
-    Try(req[ConnectorPluginsValidate](s"/connector-plugins/${name}/config/validate", "PUT", s"""{\"connector.class\": \"${name}\"}""").get)
+    Try(req[ConnectorPluginsValidate](s"/connector-plugins/${name}/config/validate", "PUT", s"""{\"connector.class\": \"${name}\", \"topics\": \"dummy\"}""").get)
   }
 
 
