@@ -12,7 +12,7 @@ Connect tools is Maven
 ## Requirements
 
 * Java 1.8
-* Gradle 3
+* Gradle 5
 
 Kafka Connect CLI
 =================

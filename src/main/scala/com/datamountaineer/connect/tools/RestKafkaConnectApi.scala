@@ -34,7 +34,10 @@ object ScalajHttpClient extends HttpClient {
     */
   def request(url: java.net.URI, method: String, headers: Seq[(String, String)], reqBody: Option[String]): Try[(Int, Option[String])] = {
     try {
-      val r = Http(url.toString).headers(headers)
+      val r = (Option(url.getUserInfo).getOrElse("").split(":") match {
+        case Array(user, password) => Http(url.toString).auth(user, password)
+        case _ => Http(url.toString)
+      }).headers(headers)
       (reqBody match {
         case Some(body) => r.postData(body)
         case None => r
