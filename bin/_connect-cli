@@ -1,0 +1,16 @@
+#compdef connect-cli
+
+local IFS=$'\n'
+local _1st_arguments=($(connect-cli --help | grep -A 1 "Command" | tr '\n' ':'  | rev | cut -c2- | rev | sed 's/:--:/\n/g' | cut -d' ' -f2-))
+
+_arguments \
+    '--help:prints this usage text' \
+    '--endpoint:Kafka Connect REST URL, default is http://localhost:8083/' \
+    '--format:Format of the config, default is PROPERTIES. Valid options are PROPERTIES and JSON' \
+    '*:: :->subcmds' && return 0
+
+if (( CURRENT == 1 )); then
+    _describe -t commands "connect-cli" _1st_arguments
+    return
+fi
+
