@@ -1,16 +1,58 @@
 #compdef connect-cli
 
-local IFS=$'\n'
-local _1st_arguments=($(connect-cli --help | grep -A 1 "Command" | tr '\n' ':'  | rev | cut -c2- | rev | sed 's/:--:/\n/g' | cut -d' ' -f2-))
+_connect_cli_cmds() {
+    local ret=1
+    local IFS=$'\n'
+    local cmds=($(connect-cli --help | grep -A 1 'Command' | awk 'BEGIN{RS="--\n";FS="\n";OFS=":"}{print $1,$2}' | cut -d' ' -f2-))
+    _describe -t commands "commands" cmds && ret=0
+    return ret
+}
 
-_arguments \
-    '--help:prints this usage text' \
-    '--endpoint:Kafka Connect REST URL, default is http://localhost:8083/' \
-    '--format:Format of the config, default is PROPERTIES. Valid options are PROPERTIES and JSON' \
-    '*:: :->subcmds' && return 0
+_connect_cli_connector() {
+    local ret=1
+    if connect-cli ps &>/dev/null; then
+        local IFS=$'\n'
+        local connectors=($(connect-cli ps))
+        _describe -t connector "connector" connectors && ret=0
+    fi
+    return ret
+}
 
-if (( CURRENT == 1 )); then
-    _describe -t commands "connect-cli" _1st_arguments
-    return
-fi
+_connect_cli_plugins() {
+    local ret=1
+    if connect-cli plugins &>/dev/null; then
+        local IFS=$'\n'
+        local plugins=($(connect-cli plugins | sed 's/^Class name: \([^,]*\),.*/\1/g'))
+        _describe -t plugins "plugins" plugins && ret=0
+    fi
+    return ret
+}
 
+_connect_cli() {
+    local ret=1
+    _arguments -C \
+        "--help[prints this usage text]" \
+        "(-e,--endpoint)"{-e,--endpoint}"[Kafka Connect REST URL, default is http://localhost:8083/]" \
+        "(-f,--format)"{-f,--format}"[Format of the config, default is PROPERTIES. Valid options are PROPERTIES and JSON]:format:(JSON PROPERTIES)" \
+        "1: :->cmds" \
+        "*:: :->args" && ret=0
+
+    case $state in
+    cmds)
+        _connect_cli_cmds && ret=0
+        ;;
+    args)
+        case $words[1] in
+        describe | validate)
+            _connect_cli_plugins && ret=0
+            ;;
+        get | describe | pause | resume | restart | rm | status)
+            _connect_cli_connector && ret=0
+            ;;
+        esac
+        ;;
+    esac
+    return ret
+}
+
+_connect_cli
